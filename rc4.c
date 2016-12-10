@@ -1,36 +1,40 @@
-//Adapted from http://www.cypherspace.org/adam/rsa/rc4.c
+/*
+ * Adapted from http://wwww.cypherspace.org/adam/rsa/rc4.c
+ */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 
 #define buf_size 1024
 
 typedef struct rc4_key {
-        unsigned char state[256];       
-        unsigned char x;        
-        unsigned char y;
+        uint8_t state[256];       
+        uint8_t x;        
+        uint8_t y;
 } rc4_key;
 
-void swap_byte(unsigned char *x, unsigned char *y) {
-    unsigned char t = *x;
+void swap_byte(uint8_t *x, uint8_t *y) {
+    uint8_t t = *x;
     *x = *y;
     *y = t;
 }
 
-void prepare_key(unsigned char *key_data_ptr, int key_data_len, rc4_key *key) {
-    unsigned char index1;
-    unsigned char index2;
-    unsigned char* state;
-    short counter;
+void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key *key) {
+    uint8_t *state;
+    uint8_t index1 = 0;
+    uint8_t index2 = 0;
+    size_t counter;
+
+    key->x = 0;
+    key->y = 0;
 
     state = &key->state[0];
     for(counter = 0; counter < 256; counter++)
-    state[counter] = counter;
-    key->x = 0;
-    key->y = 0;
-    index1 = 0;
-    index2 = 0;
+        state[counter] = counter;
+
     for(counter = 0; counter < 256; counter++) {
         index2 = (key_data_ptr[index1] + state[counter] + index2) % 256;
         swap_byte(&state[counter], &state[index2]);
@@ -38,12 +42,12 @@ void prepare_key(unsigned char *key_data_ptr, int key_data_len, rc4_key *key) {
     }
 }
 
-void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key) {
-    unsigned char x;
-    unsigned char y;
-    unsigned char* state;
-    unsigned char xorIndex;
-    short counter;
+void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key *key) {
+    uint8_t x;
+    uint8_t y;
+    uint8_t *state;
+    uint8_t xorIndex;
+    size_t counter;
 
     x = key->x;
     y = key->y;
@@ -59,14 +63,14 @@ void rc4(unsigned char *buffer_ptr, int buffer_len, rc4_key *key) {
     key->y = y;
 }
 
-int main(int argc, char* argv[]) {
-    unsigned char buf[buf_size];
-    unsigned char seed[256];
+int main(int argc, char *argv[]) {
+    FILE *input, *output;
+    uint8_t buf[buf_size];
+    uint8_t seed[256];
     char data[512];
     char digit[5];
-    unsigned int hex;
-    int n, i, rd;
-    FILE *input, *output;
+    uint16_t hex;
+    size_t i, n, rd;
     rc4_key key;
 
     if (argc < 3) {
@@ -87,14 +91,24 @@ int main(int argc, char* argv[]) {
     for (i = 0; i < n; i++) {
         digit[2] = data[i * 2];
         digit[3] = data[i * 2 + 1];
-        sscanf(digit, "%x", &hex);
+        sscanf(digit, "%"SCNu16, &hex);
         seed[i] = hex;
     }
 
     prepare_key(seed, n, &key);
 
     input = fopen(argv[2], "rb");
+    if (!input) {
+        fprintf(stderr, "Error: Input file %s not found.\n", argv[2]);
+        return errno;
+    }
     output = argc > 3 ? fopen(argv[3], "wb") : stdout;
+    if (!output) {
+        if (input)
+            fclose(input);
+        fprintf(stderr, "Error: Invalid output file.\n");
+        return errno;
+    }
 
     rd = fread(buf, 1, buf_size, input);
     while (rd > 0) {
@@ -109,4 +123,3 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
-
