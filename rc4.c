@@ -7,13 +7,15 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <errno.h>
 
-#define buf_size 1024
+#define BUF_SIZE 1024
+#define SEED_SIZE 256
 
 typedef struct rc4_key {
-        uint8_t state[256];       
-        uint8_t x;        
-        uint8_t y;
+    uint8_t state[SEED_SIZE];
+    uint8_t x;        
+    uint8_t y;
 } rc4_key;
 
 void swap_byte(uint8_t *x, uint8_t *y) {
@@ -32,11 +34,11 @@ void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key *key) {
     key->y = 0;
 
     state = &key->state[0];
-    for(counter = 0; counter < 256; counter++)
+    for(counter = 0; counter < SEED_SIZE; counter++)
         state[counter] = counter;
 
-    for(counter = 0; counter < 256; counter++) {
-        index2 = (key_data_ptr[index1] + state[counter] + index2) % 256;
+    for(counter = 0; counter < SEED_SIZE; counter++) {
+        index2 = (key_data_ptr[index1] + state[counter] + index2) % SEED_SIZE;
         swap_byte(&state[counter], &state[index2]);
         index1 = (index1 + 1) % key_data_len;
     }
@@ -53,10 +55,10 @@ void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key *key) {
     y = key->y;
     state = &key->state[0];
     for(counter = 0; counter < buffer_len; counter++) {
-        x = (x + 1) % 256;
-        y = (state[x] + y) % 256;
+        x = (x + 1) % SEED_SIZE;
+        y = (state[x] + y) % SEED_SIZE;
         swap_byte(&state[x], &state[y]);
-        xorIndex = (state[x] + state[y]) % 256;
+        xorIndex = (state[x] + state[y]) % SEED_SIZE;
         buffer_ptr[counter] ^= state[xorIndex];
     }
     key->x = x;
@@ -65,8 +67,8 @@ void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key *key) {
 
 int main(int argc, char *argv[]) {
     FILE *input, *output;
-    uint8_t buf[buf_size];
-    uint8_t seed[256];
+    uint8_t buf[BUF_SIZE];
+    uint8_t seed[SEED_SIZE];
     char data[512];
     char digit[5];
     uint16_t hex;
@@ -99,22 +101,22 @@ int main(int argc, char *argv[]) {
 
     input = fopen(argv[2], "rb");
     if (!input) {
-        fprintf(stderr, "Error: Input file %s not found.\n", argv[2]);
+        fprintf(stderr, "Couldn't open input file %s: %s", argv[2], strerror(errno));
         return errno;
     }
     output = argc > 3 ? fopen(argv[3], "wb") : stdout;
     if (!output) {
+        perror("Couldn't open output stream");
         if (input)
             fclose(input);
-        fprintf(stderr, "Error: Invalid output file.\n");
         return errno;
     }
 
-    rd = fread(buf, 1, buf_size, input);
+    rd = fread(buf, 1, BUF_SIZE, input);
     while (rd > 0) {
         rc4(buf, rd, &key);
         fwrite(buf, 1, rd, output);
-        rd = fread(buf, 1, buf_size, input);
+        rd = fread(buf, 1, BUF_SIZE, input);
     }
 
     fclose(input);
