@@ -5,27 +5,33 @@
 #include <inttypes.h>
 #include <errno.h>
 
+#define BUF_SIZE 1024
+
 int main(int argc, char *argv[]) {
+    rc4_key_t key;
     FILE *input, *output;
+    size_t i, n;
     uint8_t buf[BUF_SIZE];
     uint8_t seed[SEED_SIZE];
-    char data[512] = "";
-    char digit[5] = "AA00";
     uint16_t hex;
-    size_t i, n;
-    rc4_key key;
+    char data[512] = "";
+    /*char digit[3] = "00";
+    char *p;*/
 
     if (argc < 3) {
-        fprintf(stderr, "Syntax: %s key in_file [out_file]\n", argv[0]);
+        fprintf(stderr, "Syntax: %s hexadecimal_seed input_file [output_file]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
+    /*Truncating input key to 2 digits short of sizeof(data), accounting for the null terminator
+     * and the eventual extra digit to even the number of digits */
     strncat(data, argv[1], sizeof(data)-2);
     if (data[strspn(data, "0123456789abcdefABCDEF")] != 0) {
-        fprintf(stderr, "Key %s contains non-hexadecimal characters.\n", argv[1]);
+        fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
     }
 
+    /*Making sure the raw seed has an even number of hexadecimal digits by appending '0' at the end.*/
     n = strlen(data);
     if (n & 1) {
         data[n++] = '0';
@@ -33,10 +39,11 @@ int main(int argc, char *argv[]) {
     }
     n /= 2;
 
+    /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        digit[2] = data[i * 2];
-        digit[3] = data[i * 2 + 1];
-        sscanf(digit, "%"SCNx16, &hex);
+        /*strncpy(digit, data + i * 2, 2);
+        seed[i] = (uint8_t) strtoul(digit, &p, 16);*/
+        sscanf(data + i * 2, "%2"SCNx16, &hex);
         seed[i] = (uint8_t) hex;
     }
 
@@ -66,5 +73,5 @@ int main(int argc, char *argv[]) {
     if (argc > 3)
         fclose(output);
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -6,7 +6,7 @@ void swap_byte(uint8_t *x, uint8_t *y) {
     y = t;
 }
 
-void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key *key) {
+void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
     size_t counter;
     uint8_t index1 = 0;
     uint8_t index2 = 0;
@@ -24,7 +24,7 @@ void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key *key) {
     }
 }
 
-void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key *key) {
+void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key_t *key) {
     size_t counter;
 
     for(counter = 0; counter < buffer_len; counter++) {
