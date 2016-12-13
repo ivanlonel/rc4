@@ -101,7 +101,7 @@ int main(int argc, char *argv[]) {
 
     input = fopen(argv[2], "rb");
     if (!input) {
-        fprintf(stderr, "Couldn't open input file %s: %s", argv[2], strerror(errno));
+        fprintf(stderr, "Couldn't open input file \"%s\": %s.\n", argv[2], strerror(errno));
         return errno;
     }
     output = argc > 3 ? fopen(argv[3], "wb") : stdout;
