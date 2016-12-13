@@ -21,6 +21,11 @@ int main(int argc, char *argv[]) {
     }
 
     strncat(data, argv[1], sizeof(data)-2);
+    if (data[strspn(data, "0123456789abcdefABCDEF")] != 0) {
+        fprintf(stderr, "Key %s contains non-hexadecimal characters.\n", argv[1]);
+        return EXIT_FAILURE;
+    }
+
     n = strlen(data);
     if (n & 1) {
         strncat(data, "0", 1);
@@ -32,7 +37,7 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < n; i++) {
         digit[2] = data[i * 2];
         digit[3] = data[i * 2 + 1];
-        sscanf(digit, "%"SCNu16, &hex);
+        sscanf(digit, "%"SCNx16, &hex);
         seed[i] = hex;
     }
 
