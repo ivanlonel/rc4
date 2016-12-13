@@ -9,8 +9,8 @@ int main(int argc, char *argv[]) {
     FILE *input, *output;
     uint8_t buf[BUF_SIZE];
     uint8_t seed[SEED_SIZE];
-    char data[512];
-    char digit[5];
+    char data[512] = "";
+    char digit[5] = "AA";
     uint16_t hex;
     size_t i, n, rd;
     rc4_key key;
@@ -20,15 +20,14 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    strcpy(data, argv[1]);
+    strncat(data, argv[1], sizeof(data)-2);
     n = strlen(data);
     if (n & 1) {
-        strcat(data, "0");
+        strncat(data, "0", 1);
         n++;
     }
     n /= 2;
 
-    strcpy(digit, "AA");
     digit[4] = '\0';
     for (i = 0; i < n; i++) {
         digit[2] = data[i * 2];

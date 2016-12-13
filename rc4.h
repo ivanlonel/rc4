@@ -8,9 +8,9 @@
 #define SEED_SIZE 256
 
 typedef struct rc4_key {
-    uint8_t state[SEED_SIZE];
-    uint8_t x;        
+    uint8_t x;
     uint8_t y;
+    uint8_t state[SEED_SIZE];
 } rc4_key;
 
 void swap_byte(uint8_t *x, uint8_t *y);
