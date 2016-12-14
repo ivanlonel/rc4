@@ -1,22 +1,28 @@
 CC       = gcc
 BIN      = rc4
-OBJ      = rc4.o main.o
+SRC      = rc4.c main.c
+OBJ      = $(SRC:%.c=%.o)
 DEPS     = rc4.h
+LIBS     = -L.
 INCS     = -I.
-CFLAGS   = $(INCS) -std=c90 -mtune=native -O2 -Wall -Wextra -pedantic
-LIBS     =
+RELFLAGS = -mtune=native -O2
+DBGFLAGS = -g3 -Og
+CFLAGS   = $(INCS) -std=c90 -Wall -Wextra -pedantic $(RELFLAGS)
 RM       = rm -f
 
-.PHONY: all all-before all-after clean clean-custom
+.PHONY: all clean debug
 
-all: all-before $(BIN) all-after
+all: $(BIN) 
 
-clean: clean-custom
+clean:
 	${RM} $(OBJ) $(BIN) *~
+
+debug: CFLAGS := $(patsubst $(RELFLAGS),$(DBGFLAGS),$(CFLAGS))
+debug: $(BIN)
 
 $(BIN): $(OBJ)
 	$(CC) $^ -o $@ $(LIBS)
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) -c $< -o $@ $(CFLAGS)
 
