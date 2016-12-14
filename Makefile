@@ -3,7 +3,7 @@ BIN      = rc4
 OBJ      = rc4.o main.o
 DEPS     = rc4.h
 INCS     = -I.
-CFLAGS   = $(INCS) -ansi -mtune=native -O2 -Wall -Wextra -pedantic
+CFLAGS   = $(INCS) -std=c90 -mtune=native -O2 -Wall -Wextra -pedantic
 LIBS     =
 RM       = rm -f
 

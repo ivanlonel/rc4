@@ -1,22 +1,23 @@
 #include "rc4.h"
 
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
 #include <errno.h>
+#include <inttypes.h>
 
 #define BUF_SIZE 1024
 
 int main(int argc, char *argv[]) {
     rc4_key_t key;
+    byte_t buf[BUF_SIZE];
+    byte_t seed[SEED_SIZE];
     FILE *input, *output;
     size_t i, n;
-    uint8_t buf[BUF_SIZE];
-    uint8_t seed[SEED_SIZE];
-    uint16_t hex;
     char data[512] = "";
     /*char digit[3] = "00";
     char *p;*/
+    uint_fast16_t hex;
 
     if (argc < 3) {
         fprintf(stderr, "Syntax: %s hexadecimal_seed input_file [output_file]\n", argv[0]);
@@ -41,10 +42,11 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        /*strncpy(digit, data + i * 2, 2);
-        seed[i] = (uint8_t) strtoul(digit, &p, 16);*/
-        sscanf(data + i * 2, "%2"SCNx16, &hex);
-        seed[i] = (uint8_t) hex;
+        sscanf(data + i * 2, "%2"SCNxFAST16, &hex);
+        seed[i] = (byte_t) hex;
+        /*//Alternative way, without using inttypes.h:
+        strncpy(digit, data + i * 2, 2);
+        seed[i] = (byte_t) strtoul(digit, &p, 16);*/
     }
 
     prepare_key(seed, n, &key);

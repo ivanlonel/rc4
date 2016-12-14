@@ -1,15 +1,15 @@
 #include "rc4.h"
 
-void swap_byte(uint8_t *x, uint8_t *y) {
-    uint8_t *t = x;
+void swap_byte(byte_t *x, byte_t *y) {
+    byte_t *t = x;
     x = y;
     y = t;
 }
 
-void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
+void prepare_key(byte_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
     size_t counter;
-    uint8_t index1 = 0;
-    uint8_t index2 = 0;
+    byte_t index1 = 0;
+    byte_t index2 = 0;
 
     key->x = 0;
     key->y = 0;
@@ -24,7 +24,7 @@ void prepare_key(uint8_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
     }
 }
 
-void rc4(uint8_t *buffer_ptr, size_t buffer_len, rc4_key_t *key) {
+void rc4(byte_t *buffer_ptr, size_t buffer_len, rc4_key_t *key) {
     size_t counter;
 
     for(counter = 0; counter < buffer_len; counter++) {
