@@ -14,10 +14,10 @@ int main(int argc, char *argv[]) {
     byte_t seed[SEED_SIZE];
     FILE *input, *output;
     size_t i, n;
+    uint_fast16_t hex;
     char data[512] = "";
     /*char digit[3] = "00";
     char *p;*/
-    uint_fast16_t hex;
 
     if (argc < 3) {
         fprintf(stderr, "Syntax: %s hexadecimal_seed input_file [output_file]\n", argv[0]);
@@ -54,14 +54,13 @@ int main(int argc, char *argv[]) {
     input = fopen(argv[2], "rb");
     if (!input) {
         fprintf(stderr, "Couldn't open input file \"%s\": %s.\n", argv[2], strerror(errno));
-        return errno;
+        return EXIT_FAILURE;
     }
     output = argc > 3 ? fopen(argv[3], "wb") : stdout;
     if (!output) {
         perror("Couldn't open output stream");
-        if (input)
-            fclose(input);
-        return errno;
+        fclose(input);
+        return EXIT_FAILURE;
     }
 
     i = fread(buf, 1, BUF_SIZE, input);
