@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     FILE *input, *output;
     size_t i, n;
     uint_fast16_t hex;
-    char data[512] = "";
+    char data[SEED_SIZE * 2] = "";
     /*char digit[3] = "00";
     char *p;*/
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
 
     /*Truncating input key to 2 digits short of sizeof(data), accounting for the null terminator
      * and the eventual extra digit to even the number of digits */
-    strncat(data, argv[1], sizeof(data)-2);
+    strncat(data, argv[1], sizeof(data) - 2);
     if (data[strspn(data, "0123456789abcdefABCDEF")] != 0) {
         fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
