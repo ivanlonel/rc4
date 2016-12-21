@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
     FILE *input, *output;
     size_t i, n;
     uint_fast16_t hex;
-    char data[SEED_SIZE * 2] = "";
+    char data[SEED_SIZE * 2 + 1] = "";
     /*char digit[3] = "00";
     char *p;*/
 
@@ -24,9 +24,10 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    /*Truncating input key to 2 digits short of sizeof(data), accounting for the null terminator
-     * and the eventual extra digit to even the number of digits */
-    strncat(data, argv[1], sizeof(data) - 2);
+    /*If the data array length is even, truncate input key to 2 digits short of sizeof(data),
+     *accounting for the null terminator and the eventual extra digit to even the number of digits.
+     *If it's odd, reserve only the last position for the null terminator. */
+    strncat(data, argv[1], sizeof(data) - 2 + (sizeof(data) & 1));
     if (data[strspn(data, "0123456789abcdefABCDEF")] != 0) {
         fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
@@ -44,7 +45,7 @@ int main(int argc, char *argv[]) {
     for (i = 0; i < n; i++) {
         sscanf(data + i * 2, "%2"SCNxFAST16, &hex);
         seed[i] = (byte_t) hex;
-        /*//Alternative way, without using inttypes.h:
+        /*Alternative way, without using inttypes.h:
         strncpy(digit, data + i * 2, 2);
         seed[i] = (byte_t) strtoul(digit, &p, 16);*/
     }
@@ -59,20 +60,32 @@ int main(int argc, char *argv[]) {
     output = argc > 3 ? fopen(argv[3], "wb") : stdout;
     if (!output) {
         perror("Couldn't open output stream");
-        fclose(input);
+        if (fclose(input) == EOF)
+            fprintf(stderr, "Couldn't close input file \"%s\": %s.\n", argv[2], strerror(errno));
         return EXIT_FAILURE;
     }
 
-    i = fread(buf, 1, BUF_SIZE, input);
+    /*while (!feof(input)) {
+        i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
+        rc4(buf, i, &key);
+        fwrite(buf, sizeof(byte_t), i, output);
+    }*/
+    i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
     while (i > 0) {
         rc4(buf, i, &key);
-        fwrite(buf, 1, i, output);
-        i = fread(buf, 1, BUF_SIZE, input);
+        fwrite(buf, sizeof(byte_t), i, output);
+        i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
     }
 
-    fclose(input);
-    if (argc > 3)
-        fclose(output);
+    if (ferror(input))
+        fprintf(stderr, "Error reading from input file \"%s\".\n", argv[2]);
+    if (ferror(output))
+        fprintf(stderr, "Error writing to output stream.\n");
+
+    if (fclose(input) == EOF)
+        fprintf(stderr, "Couldn't close input file \"%s\": %s.\n", argv[2], strerror(errno));
+    if (fclose(output) == EOF)
+        perror("Couldn't close output stream");
 
     return EXIT_SUCCESS;
 }

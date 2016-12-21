@@ -5,7 +5,9 @@ MATCH    = grep -i -c
 
 BIN      = rc4
 SRC      = rc4.c main.c
-OBJ      = $(SRC:%.c=%.o)
+
+DEP      = $(patsubst %,%.d,$(basename $(SRC)))
+OBJ      = $(DEP:%.d=%.o)
 
 DEPFLAGS = -MT $*.o -MF $*.Td -MMD -MP
 WFLAGS   = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 -Wpadded -Wcast-qual -Wcast-align \
@@ -55,7 +57,7 @@ debug: LDFLAGS += $(DLDFLAGS)
 debug: $(BIN)
 
 clean:
-	$(RM) $(SRC:%.c=%.Td) $(SRC:%.c=%.d) $(SRC:%.c=%.i) $(SRC:%.c=%.s) $(OBJ) *~
+	$(RM) $(DEP:%.d=%.Td) $(DEP) $(DEP:%.d=%.i) $(DEP:%.d=%.s) $(OBJ) *~
 
 $(BIN): $(OBJ)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
@@ -64,7 +66,6 @@ $(BIN): $(OBJ)
 %.o: %.c %.d
 	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(WFLAGS) $(CFLAGS) $(ASFLAGS)
 	$(MV) $*.Td $*.d
-
 
 ## Prevents make from using its implicit rules
 ## forcing use of the rules below instead.
@@ -91,4 +92,4 @@ $(BIN): $(OBJ)
 
 # Include rules from the dependency files that exist.
 # Using - to avoid failing on non-existent files.
--include $(patsubst %,%.d,$(basename $(SRC)))
+-include $(DEP)
