@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <inttypes.h>
 
 #define BUF_SIZE 1024
@@ -19,8 +18,8 @@ int main(int argc, char *argv[]) {
     /*char digit[3] = "00";
     char *p;*/
 
-    if (argc < 3) {
-        fprintf(stderr, "Syntax: %s hexadecimal_seed input_file [output_file]\n", argv[0]);
+    if (argc < 2) {
+        fprintf(stderr, "Syntax: %s hexadecimal_seed [input_file [output_file]]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -52,16 +51,16 @@ int main(int argc, char *argv[]) {
 
     prepare_key(seed, n, &key);
 
-    input = fopen(argv[2], "rb");
+    input = argc > 2 ? fopen(argv[2], "rb") : freopen(NULL, "rb", stdin);
     if (!input) {
-        fprintf(stderr, "Couldn't open input file \"%s\": %s.\n", argv[2], strerror(errno));
+        perror("Couldn't open input stream");
         return EXIT_FAILURE;
     }
-    output = argc > 3 ? fopen(argv[3], "wb") : stdout;
+    output = argc > 3 ? fopen(argv[3], "wb") : freopen(NULL, "wb", stdout);
     if (!output) {
         perror("Couldn't open output stream");
         if (fclose(input) == EOF)
-            fprintf(stderr, "Couldn't close input file \"%s\": %s.\n", argv[2], strerror(errno));
+            perror("Couldn't close input stream");
         return EXIT_FAILURE;
     }
 
@@ -78,12 +77,12 @@ int main(int argc, char *argv[]) {
     }
 
     if (ferror(input))
-        fprintf(stderr, "Error reading from input file \"%s\".\n", argv[2]);
+        perror("Error reading from input stream");
     if (ferror(output))
-        fprintf(stderr, "Error writing to output stream.\n");
+        perror("Error writing to output stream");
 
     if (fclose(input) == EOF)
-        fprintf(stderr, "Couldn't close input file \"%s\": %s.\n", argv[2], strerror(errno));
+        perror("Couldn't close input stream");
     if (fclose(output) == EOF)
         perror("Couldn't close output stream");
 
