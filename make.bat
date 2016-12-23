@@ -15,6 +15,5 @@ REM Appending CC_PATH to PATH (instead of prepending) so that Windows keeps usin
 echo ;%PATH%; | find /i /c ";%CC_PATH%;" >nul || set PATH=%PATH%;%CC_PATH%
 echo ;%PATH%; | find /i /c ";%SYS_PATH%;" >nul || set PATH=%PATH%;%SYS_PATH%
 
-::%MK_EXEC% RM="del /f /q" RMDIR="rd /s /q" MV="move /y" MKDIR="if not exist $(dir $@)\NUL md" MATCHCOUNT="find /i /c" DLDFLAGS="" %*
-::%MK_EXEC% RMDIR="rd /s /q" MV="move /y" MKDIR="if not exist $(dir $@)\NUL md" MATCHCOUNT="find /i /c" DLDFLAGS="" %*
+REM The -rdynamic linker flag works with cygwin but not with any of the MinGW versions tested, so we're omitting it via command line for now.
 %MK_EXEC% DLDFLAGS="" %*
