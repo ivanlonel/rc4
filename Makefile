@@ -1,44 +1,49 @@
-CC         = gcc
-CPP        = $(CC) -E
-AS         = as
-RM         = rm -rf
-MV         = mv -f
-MKDIR      = mkdir
-MATCHCOUNT = grep -i -c
+CC          = gcc
+CPP         = $(CC) -E
+AS          = as
+RM          = rm -rf
+MV          = mv -f
+MKDIR       = mkdir
+MATCHCOUNT  = grep -i -c
 
-SRC        = $(addprefix $(srcdir)/,rc4.c main.c)
-BIN        = $(bindir)/rc4
+BIN         = $(bindir)/rc4
+SRC         = $(addprefix $(srcdir)/,rc4.c main.c)
+#SRC        = $(wildcard $(srcdir)/*.*)
+OBJ         = $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
+DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
+#OBJ        = $(patsubst %,$(objdir)/%.o,$(nodir $(basename $(SRC))))
+#DEP        = $(patsubst %,$(depdir)/%.d,$(nodir $(basename $(SRC))))
 
-prefix     = .
-exec_prefix= $(prefix)
+prefix      = .
+exec_prefix = $(prefix)
 
-srcdir     = $(prefix)/src
-includedir = $(prefix)/include
-libdir     = $(exec_prefix)/lib
-bindir     = $(exec_prefix)/bin
-objdir     = $(exec_prefix)/.o
-asmdir     = $(prefix)/.s
-purecdir   = $(prefix)/.i
-depdir     = $(prefix)/.d
+srcdir      = $(prefix)/src
+includedir  = $(prefix)/include
+libdir      = $(exec_prefix)/lib
+bindir      = $(exec_prefix)/bin
+objdir      = $(exec_prefix)/.o
+asmdir      = $(prefix)/.s
+preprocdir  = $(prefix)/.i
+depdir      = $(prefix)/.d
 
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
-DEPFLAGS   = -MT $(objdir)/$*.o -MF $(depdir)/$*.Td -MMD -MP
-POSTCOMPILE= $(MV) $(depdir)/$*.Td $(depdir)/$*.d
+DEPFLAGS    = -MT $(objdir)/$*.o -MF $(depdir)/$*.Td -MMD -MP
+POSTCOMPILE = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
-WFLAGS     = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 -Wpadded -Wcast-qual -Wcast-align \
-	-Wlogical-op -Wfloat-equal -Wredundant-decls -Winline -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
+WFLAGS      = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 -Wpadded -Wlogical-op -Wredundant-decls \
+	-Wcast-qual -Wcast-align -Wpointer-arith -Wfloat-equal -Winline -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition -Winit-self
 
-CPPFLAGS   = -I$(includedir) $(DEPFLAGS) -std=c90 -Wall -pedantic
-CFLAGS     = $(WFLAGS) -pipe
-ASFLAGS    =
-LDFLAGS    = -L$(libdir)
+CPPFLAGS    = -I$(includedir) $(DEPFLAGS) -std=c90 -Wall -pedantic
+CFLAGS      = $(WFLAGS) -pipe
+ASFLAGS     =
+LDFLAGS     = -L$(libdir)
 
-RCFLAGS    = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
-DCFLAGS    = -g3
-RLDFLAGS   = -s
-DLDFLAGS   = -rdynamic
+RCFLAGS     = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
+DCFLAGS     = -g3
+RLDFLAGS    = -s
+DLDFLAGS    = -rdynamic
 
 # Flags not working on Clang
 ifeq ($(shell $(CC) --version 2>&1 | $(MATCHCOUNT) "clang"),0)
@@ -63,22 +68,22 @@ endif
 all: release
 
 release: CPPFLAGS += -DNDEBUG
-release: CFLAGS += $(RCFLAGS)
-release: LDFLAGS += $(RLDFLAGS)
+release: CFLAGS   += $(RCFLAGS)
+release: LDFLAGS  += $(RLDFLAGS)
 release: $(BIN)
 
 debug: CPPFLAGS += -DDEBUG
-debug: CFLAGS += $(DCFLAGS)
-debug: LDFLAGS += $(DLDFLAGS)
+debug: CFLAGS   += $(DCFLAGS)
+debug: LDFLAGS  += $(DLDFLAGS)
 debug: $(BIN)
 
 clean:
-	$(RM) $(objdir) $(asmdir) $(purecdir) $(depdir)
+	$(RM) $(objdir) $(asmdir) $(preprocdir) $(depdir)
 
 # Clearing the suffix list to avoid confusion with unexpected implicit rules
 .SUFFIXES:
 
-$(BIN): $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC))) | $(bindir)
+$(BIN): $(OBJ) | $(bindir)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Compiling in a single step might allow better optimization.
@@ -90,10 +95,10 @@ $(objdir)/%.o: $(asmdir)/%.s | $(objdir)
 	$(AS) $< -o $@ $(ASFLAGS)
 	@$(POSTCOMPILE)
 
-$(asmdir)/%.s: $(purecdir)/%.i | $(asmdir)
+$(asmdir)/%.s: $(preprocdir)/%.i | $(asmdir)
 	$(CC) -S $< -o $@ $(CFLAGS)
 
-$(purecdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(purecdir) $(depdir)
+$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(preprocdir) $(depdir)
 	$(CPP) $< -o $@ $(CPPFLAGS)
 
 # Create a pattern rule with an empty recipe,
@@ -102,11 +107,11 @@ $(depdir)/%.d: ;
 
 # Mark files matching the patterns below as precious to make
 # so they won’t be automatically deleted as intermediate files.
-.PRECIOUS: $(depdir)/%.d
+.PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i $(asmdir)/%.s
 
 # Include rules from the dependency files that exist.
 # Using - to avoid failing on non-existent files.
--include $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
+-include $(DEP)
 
-$(bindir) $(objdir) $(asmdir) $(purecdir) $(depdir):
+$(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 	@$(MKDIR) $@
