@@ -3,7 +3,11 @@ AS          = as
 RM          = rm -rf
 MV          = mv -f
 MKDIR       = mkdir
-MATCHCOUNT  = grep -i -c
+SYSNAME     = uname -s
+MATCH       = grep -E -i
+
+BINNAME    = rc4
+SRCNAMES    = rc4.c main.c
 
 prefix      = .
 exec_prefix = $(prefix)
@@ -17,13 +21,10 @@ asmdir      = $(prefix)/.s
 preprocdir  = $(prefix)/.i
 depdir      = $(prefix)/.d
 
-BIN         = $(bindir)/rc4
-SRC         = $(addprefix $(srcdir)/,rc4.c main.c)
-#SRC        = $(wildcard $(srcdir)/*.*)
+BIN         = $(addprefix $(bindir)/,$(BINNAME))
+SRC         = $(if $(strip $(SRCNAMES)), $(addprefix $(srcdir)/,$(SRCNAMES)), $(wildcard $(srcdir)/*.*))
 OBJ         = $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
 DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
-#OBJ        = $(patsubst %,$(objdir)/%.o,$(nodir $(basename $(SRC))))
-#DEP        = $(patsubst %,$(depdir)/%.d,$(nodir $(basename $(SRC))))
 
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
@@ -42,21 +43,13 @@ LDFLAGS     = -L$(libdir)
 RCFLAGS     = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 DCFLAGS     = -g3
 RLDFLAGS    = -s
-DLDFLAGS    = -rdynamic
+DLDFLAGS    = $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW"), ,-rdynamic)
 
 # Flags not working on Clang
-ifeq ($(shell $(CC) --version 2>&1 | $(MATCHCOUNT) "clang"),0)
+ifeq ( , $(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
 	RCFLAGS  += -ffunction-sections -fdata-sections
 	DCFLAGS  += -Og
-	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none
-
-	# Flags not working on Windows either
-	# SystemRoot is a Windows environment variable
-	ifndef SystemRoot
-		ifndef SYSTEMROOT
-			RLDFLAGS += -Wl,-z,norelro
-		endif
-	endif
+	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW"), , -Wl,-z,norelro)
 else
 	# Only works on Clang
 	WFLAGS = -Weverything
@@ -114,7 +107,9 @@ $(depdir)/%.d: ;
 $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 	$(MKDIR) $@
 
-# Include rules from the dependency files that exist.
+# Include rules from the dependency files that exist,
+# unless the current goal doesn't need them.
 # Using - to avoid failing on non-existent files.
+ifeq ( , $(filter $(MAKECMDGOALS), clean distclean))
 -include $(DEP)
-
+endif
