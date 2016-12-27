@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        sscanf(data + i * 2, "%2"SCNxFAST16, &hex);
+        sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
         seed[i] = (byte_t) hex;
         /*Alternative way, without using inttypes.h:
         strncpy(digit, data + i * 2, 2);

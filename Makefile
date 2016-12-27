@@ -1,18 +1,9 @@
 CC          = gcc
-CPP         = $(CC) -E
 AS          = as
 RM          = rm -rf
 MV          = mv -f
 MKDIR       = mkdir
 MATCHCOUNT  = grep -i -c
-
-BIN         = $(bindir)/rc4
-SRC         = $(addprefix $(srcdir)/,rc4.c main.c)
-#SRC        = $(wildcard $(srcdir)/*.*)
-OBJ         = $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
-DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
-#OBJ        = $(patsubst %,$(objdir)/%.o,$(nodir $(basename $(SRC))))
-#DEP        = $(patsubst %,$(depdir)/%.d,$(nodir $(basename $(SRC))))
 
 prefix      = .
 exec_prefix = $(prefix)
@@ -26,16 +17,24 @@ asmdir      = $(prefix)/.s
 preprocdir  = $(prefix)/.i
 depdir      = $(prefix)/.d
 
+BIN         = $(bindir)/rc4
+SRC         = $(addprefix $(srcdir)/,rc4.c main.c)
+#SRC        = $(wildcard $(srcdir)/*.*)
+OBJ         = $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
+DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
+#OBJ        = $(patsubst %,$(objdir)/%.o,$(nodir $(basename $(SRC))))
+#DEP        = $(patsubst %,$(depdir)/%.d,$(nodir $(basename $(SRC))))
+
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
-DEPFLAGS    = -MT $(objdir)/$*.o -MF $(depdir)/$*.Td -MMD -MP
+DEPFLAGS    = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
 WFLAGS      = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 -Wpadded -Wlogical-op -Wredundant-decls \
 	-Wcast-qual -Wcast-align -Wpointer-arith -Wfloat-equal -Winline -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition -Winit-self
 
-CPPFLAGS    = -I$(includedir) $(DEPFLAGS) -std=c90 -Wall -pedantic
+CPPFLAGS    = -I$(includedir) $(DEPFLAGS) -ansi -Wall -pedantic
 CFLAGS      = $(WFLAGS) -pipe
 ASFLAGS     =
 LDFLAGS     = -L$(libdir)
@@ -63,7 +62,7 @@ else
 	WFLAGS = -Weverything
 endif
 
-.PHONY: all clean debug release
+.PHONY: all clean distclean debug release
 
 all: release
 
@@ -77,6 +76,9 @@ debug: CFLAGS   += $(DCFLAGS)
 debug: LDFLAGS  += $(DLDFLAGS)
 debug: $(BIN)
 
+distclean: clean
+	$(RM) $(bindir)
+
 clean:
 	$(RM) $(objdir) $(asmdir) $(preprocdir) $(depdir)
 
@@ -88,18 +90,18 @@ $(BIN): $(OBJ) | $(bindir)
 
 # Compiling in a single step might allow better optimization.
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir) $(depdir)
-	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS) $(ASFLAGS)
-	@$(POSTCOMPILE)
+	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
+	$(POSTCOMPILE)
 
 $(objdir)/%.o: $(asmdir)/%.s | $(objdir)
 	$(AS) $< -o $@ $(ASFLAGS)
-	@$(POSTCOMPILE)
+	$(POSTCOMPILE)
 
 $(asmdir)/%.s: $(preprocdir)/%.i | $(asmdir)
 	$(CC) -S $< -o $@ $(CFLAGS)
 
 $(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(preprocdir) $(depdir)
-	$(CPP) $< -o $@ $(CPPFLAGS)
+	$(CC) -E $< -o $@ $(CPPFLAGS)
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
@@ -109,9 +111,10 @@ $(depdir)/%.d: ;
 # so they won’t be automatically deleted as intermediate files.
 .PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i $(asmdir)/%.s
 
+$(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
+	$(MKDIR) $@
+
 # Include rules from the dependency files that exist.
 # Using - to avoid failing on non-existent files.
 -include $(DEP)
 
-$(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
-	@$(MKDIR) $@
