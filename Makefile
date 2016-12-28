@@ -6,7 +6,7 @@ MKDIR       = mkdir
 SYSNAME     = uname -s
 MATCH       = grep -E -i
 
-BINNAME    = rc4
+BINNAME     = rc4
 SRCNAMES    = rc4.c main.c
 
 prefix      = .
@@ -31,16 +31,18 @@ DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 DEPFLAGS    = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
-WFLAGS      = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 -Wpadded -Wlogical-op -Wredundant-decls \
-	-Wcast-qual -Wcast-align -Wpointer-arith -Wfloat-equal -Winline -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
-	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition -Winit-self
+WFLAGS      = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
+	-Wpadded -Winline -Wredundant-decls -Wcast-qual -Wcast-align -Wfloat-equal -Wlogical-op \
+	-Winit-self -Wpointer-arith -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
+	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition
 
 CPPFLAGS    = -I$(includedir) $(DEPFLAGS) -ansi -Wall -pedantic
 CFLAGS      = $(WFLAGS) -pipe
 ASFLAGS     =
 LDFLAGS     = -L$(libdir)
 
-RCFLAGS     = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
+RCFLAGS     = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident \
+	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 DCFLAGS     = -g3
 RLDFLAGS    = -s
 DLDFLAGS    = $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW"), ,-rdynamic)
@@ -49,7 +51,8 @@ DLDFLAGS    = $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW"), ,-rdynamic)
 ifeq ( , $(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
 	RCFLAGS  += -ffunction-sections -fdata-sections
 	DCFLAGS  += -Og
-	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW"), , -Wl,-z,norelro)
+	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
+		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW"), , -Wl,-z,norelro)
 else
 	# Only works on Clang
 	WFLAGS = -Weverything
