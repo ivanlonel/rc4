@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
      *accounting for the null terminator and the eventual extra digit to even the number of digits.
      *If it's odd, reserve only the last position for the null terminator. */
     strncat(data, argv[1], sizeof(data) - 2 + (sizeof(data) & 1));
-    if (data[strspn(data, "0123456789abcdefABCDEF")] != 0) {
+    if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
         fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
     }
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
+        (void) sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
         seed[i] = (byte_t) hex;
         /*Alternative way, without using inttypes.h:
         strncpy(digit, data + i * 2, 2);
@@ -67,12 +67,12 @@ int main(int argc, char *argv[]) {
     /*while (!feof(input)) {
         i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
         rc4(buf, i, &key);
-        fwrite(buf, sizeof(byte_t), i, output);
+        (void) fwrite(buf, sizeof(byte_t), i, output);
     }*/
     i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
     while (i > 0) {
         rc4(buf, i, &key);
-        fwrite(buf, sizeof(byte_t), i, output);
+        (void) fwrite(buf, sizeof(byte_t), i, output);
         i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
     }
 

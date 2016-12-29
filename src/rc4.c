@@ -1,6 +1,6 @@
 #include "rc4.h"
 
-void swap_byte(byte_t *x, byte_t *y) {
+static void swap_byte(byte_t *x, byte_t *y) {
     byte_t t = *x;
     *x = *y;
     *y = t;
