@@ -10,6 +10,7 @@ set CC_PATH=C:\mingw-w64\x86_64-6.2.0-release-posix-seh-rt_v5-rev1\mingw64\bin
 REM Where to look for executables mentioned in the makefile, like 'rm', 'mv', 'grep', 'uname' and even 'make' itself if they aren't in CC_PATH already
 set UTILS_PATH=C:\msys\bin
 ::set UTILS_PATH=C:\gnuwin32\bin
+::set UTILS_PATH=C:\unxutils\usr\local\wbin
 
 REM Name of the 'make' application, to be found within the PATH.
 set MK_EXEC=mingw32-make.exe

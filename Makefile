@@ -22,7 +22,7 @@ preprocdir  = $(prefix)/.i
 depdir      = $(prefix)/.d
 
 BIN         = $(addprefix $(bindir)/,$(BINNAME))
-SRC         = $(if $(strip $(SRCNAMES)), $(addprefix $(srcdir)/,$(SRCNAMES)), $(wildcard $(srcdir)/*.*))
+SRC         = $(if $(strip $(SRCNAMES)),$(addprefix $(srcdir)/,$(SRCNAMES)),$(wildcard $(srcdir)/*.*))
 OBJ         = $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
 DEP         = $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
@@ -45,14 +45,14 @@ RCFLAGS     = -O2 -flto -fomit-frame-pointer -fno-common -fno-ident \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 DCFLAGS     = -g3
 RLDFLAGS    = -s
-DLDFLAGS    = $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW"), ,-rdynamic)
+DLDFLAGS    = $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
 # Flags not working on Clang
-ifeq ( , $(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
+ifeq (,$(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
 	RCFLAGS  += -ffunction-sections -fdata-sections
 	DCFLAGS  += -Og
 	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
-		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW"), , -Wl,-z,norelro)
+		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
 else
 	# Only works on Clang
 	WFLAGS = -Weverything
@@ -113,6 +113,6 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 # Include rules from the dependency files that exist,
 # unless the current goal doesn't need them.
 # Using - to avoid failing on non-existent files.
-ifeq ( , $(filter $(MAKECMDGOALS), clean distclean))
+ifeq (,$(filter $(MAKECMDGOALS), clean distclean))
 -include $(DEP)
 endif
