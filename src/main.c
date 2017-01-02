@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     /*If the data array length is even, truncate input key to 2 digits short of sizeof(data),
      *accounting for the null terminator and the eventual extra digit to even the number of digits.
      *If it's odd, reserve only the last position for the null terminator. */
-    strncat(data, argv[1], sizeof(data) - 2 + (sizeof(data) & 1));
+    strncat(data, argv[1], sizeof data / sizeof data[0] - 2 + (sizeof data & 1));
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
         fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
@@ -65,15 +65,15 @@ int main(int argc, char *argv[]) {
     }
 
     /*while (!feof(input)) {
-        i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
+        i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
         rc4(buf, i, &key);
-        (void) fwrite(buf, sizeof(byte_t), i, output);
+        (void) fwrite(buf, sizeof buf[0], i, output);
     }*/
-    i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
+    i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
     while (i > 0) {
         rc4(buf, i, &key);
-        (void) fwrite(buf, sizeof(byte_t), i, output);
-        i = fread(buf, sizeof(byte_t), BUF_SIZE, input);
+        (void) fwrite(buf, sizeof buf[0], i, output);
+        i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
     }
 
     if (ferror(input))
