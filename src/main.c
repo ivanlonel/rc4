@@ -5,7 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define BUF_SIZE 1024
+#define BUF_SIZE 16384
 
 int main(int argc, char *argv[]) {
     rc4_key_t key;
@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
     /*If the data array length is even, truncate input key to 2 digits short of sizeof(data),
      *accounting for the null terminator and the eventual extra digit to even the number of digits.
      *If it's odd, reserve only the last position for the null terminator. */
-    strncat(data, argv[1], sizeof data / sizeof data[0] - 2 + (sizeof data & 1));
+    strncat(data, argv[1], sizeof data - 2 + (sizeof data & 1));
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
         fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
         return EXIT_FAILURE;
@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
+        /*Using an uint_fast16_t intermediate variable because SCNxFAST8 may not be implemented*/
         (void) sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
         seed[i] = (byte_t) hex;
         /*Alternative way, without using inttypes.h:
@@ -69,12 +70,16 @@ int main(int argc, char *argv[]) {
         rc4(buf, i, &key);
         (void) fwrite(buf, sizeof buf[0], i, output);
     }*/
-    i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
+    do {
+        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
+        rc4(buf, i, &key);
+    } while (fwrite(buf, sizeof buf[0], i, output) == BUF_SIZE);
+    /*i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
     while (i > 0) {
         rc4(buf, i, &key);
         (void) fwrite(buf, sizeof buf[0], i, output);
         i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
-    }
+    }*/
 
     if (ferror(input))
         perror("Error reading from input stream");
