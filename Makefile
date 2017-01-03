@@ -31,15 +31,15 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 UPDATEDEPS   = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
-WFLAGS      := -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
+WFLAGS       = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
 	-Wpadded -Winline -Wredundant-decls -Wcast-qual -Wcast-align -Wfloat-equal -Wlogical-op \
 	-Winit-self -Wpointer-arith -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition
 
-CPPFLAGS    := -I$(includedir) -ansi -Wall -pedantic
-CFLAGS      := $(WFLAGS) -pipe
-ASFLAGS     :=
-LDFLAGS     := -L$(libdir)
+CPPFLAGS     = -I$(includedir) $(DEPFLAGS) -ansi -Wall -pedantic
+CFLAGS       = $(WFLAGS) -pipe
+ASFLAGS      =
+LDFLAGS      = -L$(libdir)
 
 RCFLAGS     := -O2 -flto -fomit-frame-pointer -fno-common -fno-ident \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
@@ -84,7 +84,7 @@ $(BIN): $(OBJ) | $(bindir)
 
 # Compiling in a single step often allows better compiler optimization.
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
-	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
 	$(UPDATEDEPS)
 
 $(objdir)/%.o: $(asmdir)/%.s | $(objdir)
@@ -95,7 +95,7 @@ $(asmdir)/%.s: $(preprocdir)/%.i | $(asmdir)
 	$(CC) -S $< -o $@ $(CFLAGS)
 
 $(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(preprocdir)
-	$(CC) -E $< -o $@ $(DEPFLAGS) $(CPPFLAGS)
+	$(CC) -E $< -o $@ $(CPPFLAGS)
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
