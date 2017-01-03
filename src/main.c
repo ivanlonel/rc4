@@ -5,7 +5,7 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define BUF_SIZE 16384
+#define BUF_SIZE 16384u
 
 int main(int argc, char *argv[]) {
     rc4_key_t key;
@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
     char *p;*/
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s hexadecimal_seed [input_file [output_file]]\n", argv[0]);
+        (void) fprintf(stderr, "Usage: %s hexadecimal_seed [input_file [output_file]]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -28,16 +28,16 @@ int main(int argc, char *argv[]) {
      *If it's odd, reserve only the last position for the null terminator. */
     n = strlen(strncat(data, argv[1], sizeof data - 2 + (sizeof data & 1)));
 
+    if (n < strlen(argv[1])) /*"%zu" specifier for size_t not implemented on ISO C90.*/
+        (void) fprintf(stderr, "Seed should have %" PRIuFAST32 " hexadecimal digits or less. Entry's been truncated.\n", (uint_fast32_t) n);
+
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
-        fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", argv[1]);
+        (void) fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", data);
         return EXIT_FAILURE;
     }
 
-    if (n < strlen(argv[1])) /*"%zu" specifier for size_t not available on ISO C90.*/
-        fprintf(stderr, "Seed should have %" PRIuFAST32 " hexadecimal digits or less. Entry's been truncated.\n", (uint_fast32_t) n);
-
     /*Making sure the raw seed has an even number of hexadecimal digits by appending '0' at the end.*/
-    if (n & 1) {
+    if (n & 1u) {
         data[n++] = '0';
         data[n] = '\0';
     }
@@ -45,12 +45,11 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        /*Using an uint_fast16_t intermediate variable because SCNxLEAST8 may not be implemented.*/
+        /*Using an uint_fast16_t intermediate variable because SCNxLEAST8 may not be defined.*/
         (void) sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
         seed[i] = (byte_t) hex;
         /*Alternative way, without using inttypes.h:
-        strncpy(digit, data + i * 2, 2);
-        seed[i] = (byte_t) strtoul(digit, &p, 16);*/
+        seed[i] = (byte_t) strtoul(strncpy(digit, data + i * 2, 2), &p, 16);*/
     }
 
     prepare_key(seed, n, &key);

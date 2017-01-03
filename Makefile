@@ -1,5 +1,4 @@
 CC          := gcc
-AS          := as
 RM          := rm -rf
 MV          := mv -f
 MKDIR       := mkdir
@@ -31,30 +30,27 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 UPDATEDEPS   = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
-WFLAGS       = -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
+WFLAGS      := -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
 	-Wpadded -Winline -Wredundant-decls -Wcast-qual -Wcast-align -Wfloat-equal -Wlogical-op \
 	-Winit-self -Wpointer-arith -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition
 
-CPPFLAGS     = -I$(includedir) $(DEPFLAGS) -ansi -Wall -pedantic
-CFLAGS       = $(WFLAGS) -pipe
-ASFLAGS      =
-LDFLAGS      = -L$(libdir)
+CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
+CFLAGS      := -pipe $(if $(shell $(CC) --version 2>&1 | $(MATCH) "clang"),-Weverything,$(WFLAGS))
+ASFLAGS     :=
+LDFLAGS     := -L$(libdir)
 
-RCFLAGS     := -O2 -flto -fomit-frame-pointer -fno-common -fno-ident \
+RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
-DCFLAGS     := -g3
-RLDFLAGS    := -s
+RLDFLAGS    := -flto -s
+DCFLAGS     := -g3 $(if $(shell $(CC) --version 2>&1 | $(MATCH) "clang"),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
-# Flags not working on Clang
-ifeq (,$(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
+# Flags not working on MacOSX
+ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) "Darwin"))
 	RCFLAGS  += -ffunction-sections -fdata-sections
-	DCFLAGS  += -Og
 	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
-else
-	WFLAGS   = -Weverything # Only works on Clang
 endif
 
 .PHONY: all clean distclean debug release
@@ -83,19 +79,19 @@ $(BIN): $(OBJ) | $(bindir)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Compiling in a single step often allows better compiler optimization.
-$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
-	$(CC) -c $< -o $@ $(CPPFLAGS) $(CFLAGS)
-	$(UPDATEDEPS)
+#$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
+#	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+#	$(UPDATEDEPS)
 
 $(objdir)/%.o: $(asmdir)/%.s | $(objdir)
-	$(AS) $< -o $@ $(ASFLAGS)
+	$(CC) -c $< -o $@ $(ASFLAGS)
 	$(UPDATEDEPS)
 
 $(asmdir)/%.s: $(preprocdir)/%.i | $(asmdir)
 	$(CC) -S $< -o $@ $(CFLAGS)
 
 $(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(preprocdir)
-	$(CC) -E $< -o $@ $(CPPFLAGS)
+	$(CC) -E $< -o $@ $(DEPFLAGS) $(CPPFLAGS)
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
