@@ -20,7 +20,7 @@ void prepare_key(byte_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
     for(counter = 0; counter < SEED_SIZE; counter++) {
         index2 = (byte_t) (key_data_ptr[index1] + key->state[counter] + index2) % SEED_SIZE;
         swap_byte(&key->state[counter], &key->state[index2]);
-        index1 = (index1 + 1u) % key_data_len; /*Casting key_data_len tp byte_t causes division by 0 when key_data_len == sizeof (byte_t)*/
+        index1 = (index1 + 1u) % key_data_len; /*Casting key_data_len to byte_t causes division by 0 when key_data_len == sizeof (byte_t)*/
     }
 }
 
