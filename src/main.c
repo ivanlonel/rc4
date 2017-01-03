@@ -3,9 +3,17 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <inttypes.h>
 
-#define BUF_SIZE 16384u
+/*This is necessary to modify stdin and stdout mode to binary, since freopen(NULL, ...) doesn't work on Windows.*/
+#ifdef _WIN32
+#   include <io.h>
+#   include <fcntl.h>
+#   define SET_BINARY_MODE(handle) (_setmode(_fileno(handle), _O_BINARY) == -1 ? NULL : handle)
+#else
+#   define SET_BINARY_MODE(handle) (handle)
+#endif
+
+#define BUF_SIZE 32768u
 
 int main(int argc, char *argv[]) {
     rc4_key_t key;
@@ -13,7 +21,7 @@ int main(int argc, char *argv[]) {
     byte_t seed[SEED_SIZE];
     FILE *input, *output;
     size_t i, n;
-    uint_fast16_t hex;
+    short unsigned hex;
     char data[SEED_SIZE * 2 + 1] = "";
     /*char digit[3] = "00";
     char *p;*/
@@ -28,8 +36,9 @@ int main(int argc, char *argv[]) {
      *If it's odd, reserve only the last position for the null terminator. */
     n = strlen(strncat(data, argv[1], sizeof data - 2 + (sizeof data & 1)));
 
-    if (n < strlen(argv[1])) /*"%zu" specifier for size_t not implemented on ISO C90.*/
-        (void) fprintf(stderr, "Seed should have %" PRIuFAST32 " hexadecimal digits or less. Entry's been truncated.\n", (uint_fast32_t) n);
+    if (n < strlen(argv[1])) { /*"%zu" specifier for size_t not implemented on ISO C90.*/
+        (void) fprintf(stderr, "Seed should have %lu hexadecimal digits or less. Entry's been truncated.\n", (long unsigned) n);
+    }
 
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
         (void) fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", data);
@@ -45,8 +54,8 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        /*Using an uint_fast16_t intermediate variable because SCNxLEAST8 may not be defined.*/
-        (void) sscanf(data + i * 2, "%2" SCNxFAST16, &hex);
+        /*Using a short unsigned intermediate variable because SCNxLEAST8 may not be defined.*/
+        (void) sscanf(data + i * 2, "%2hx", &hex);
         seed[i] = (byte_t) hex;
         /*Alternative way, without using inttypes.h:
         seed[i] = (byte_t) strtoul(strncpy(digit, data + i * 2, 2), &p, 16);*/
@@ -54,21 +63,22 @@ int main(int argc, char *argv[]) {
 
     prepare_key(seed, n, &key);
 
-    input = argc > 2 ? fopen(argv[2], "rb") : freopen(NULL, "rb", stdin);
+    input = argc > 2 ? fopen(argv[2], "rb") : SET_BINARY_MODE(stdin);
     if (!input) {
         perror("Couldn't open input stream");
         return EXIT_FAILURE;
     }
-    output = argc > 3 ? fopen(argv[3], "wb") : freopen(NULL, "wb", stdout);
+    output = argc > 3 ? fopen(argv[3], "wb") : SET_BINARY_MODE(stdout);
     if (!output) {
         perror("Couldn't open output stream");
-        if (fclose(input) == EOF)
+        if (fclose(input) == EOF) {
             perror("Couldn't close input stream");
+        }
         return EXIT_FAILURE;
     }
 
     /*while (!feof(input)) {
-        i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
+        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
         rc4(buf, i, &key);
         (void) fwrite(buf, sizeof buf[0], i, output);
     }*/
@@ -76,22 +86,26 @@ int main(int argc, char *argv[]) {
         i = fread(buf, sizeof buf[0], BUF_SIZE, input);
         rc4(buf, i, &key);
     } while (fwrite(buf, sizeof buf[0], i, output) == BUF_SIZE);
-    /*i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
+    /*i = fread(buf, sizeof buf[0], BUF_SIZE, input);
     while (i > 0) {
         rc4(buf, i, &key);
         (void) fwrite(buf, sizeof buf[0], i, output);
-        i = fread(buf, sizeof buf[0], sizeof buf / sizeof buf[0], input);
+        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
     }*/
 
-    if (ferror(input))
+    if (ferror(input)) {
         perror("Error reading from input stream");
-    if (ferror(output))
+    }
+    if (ferror(output)) {
         perror("Error writing to output stream");
+    }
 
-    if (fclose(input) == EOF)
+    if (fclose(input) == EOF) {
         perror("Couldn't close input stream");
-    if (fclose(output) == EOF)
+    }
+    if (fclose(output) == EOF) {
         perror("Couldn't close output stream");
+    }
 
     return EXIT_SUCCESS;
 }
