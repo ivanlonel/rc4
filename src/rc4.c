@@ -18,9 +18,9 @@ void prepare_key(byte_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
         key->state[counter] = (byte_t) counter;
 
     for(counter = 0; counter < SEED_SIZE; counter++) {
-        index2 = (byte_t) (key_data_ptr[index1] + key->state[counter] + index2) /*% SEED_SIZE*/;
+        index2 = (byte_t) (key_data_ptr[index1] + key->state[counter] + index2) % SEED_SIZE;
         swap_byte(&key->state[counter], &key->state[index2]);
-        index1 = (byte_t) (index1 + 1) % (byte_t) key_data_len;
+        index1 = (index1 + 1u) % key_data_len; /*Casting key_data_len tp byte_t causes division by 0 when key_data_len == sizeof (byte_t)*/
     }
 }
 
@@ -28,9 +28,9 @@ void rc4(byte_t *buffer_ptr, size_t buffer_len, rc4_key_t *key) {
     size_t counter;
 
     for(counter = 0; counter < buffer_len; counter++) {
-        key->x = (byte_t) (key->x + 1) /*% SEED_SIZE*/;
-        key->y = (byte_t) (key->state[key->x] + key->y) /*% SEED_SIZE*/;
+        key->x = (key->x + 1u) % SEED_SIZE;
+        key->y = (byte_t) (key->state[key->x] + key->y) % SEED_SIZE;
         swap_byte(&key->state[key->x], &key->state[key->y]);
-        buffer_ptr[counter] ^= key->state[(key->state[key->x] + key->state[key->y]) /*% SEED_SIZE*/];
+        buffer_ptr[counter] ^= key->state[(key->state[key->x] + key->state[key->y]) % SEED_SIZE];
     }
 }
