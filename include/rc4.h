@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define SEED_SIZE 256
+#define SEED_SIZE (UINT_LEAST8_MAX + 1)
 
-typedef uint_fast8_t byte_t;
+typedef uint_least8_t byte_t;
 
 typedef struct rc4_key {
     byte_t x;
