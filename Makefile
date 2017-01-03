@@ -54,7 +54,7 @@ ifeq (,$(shell $(CC) --version 2>&1 | $(MATCH) "clang"))
 	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
 else
-	WFLAGS := -Weverything # Only works on Clang
+	WFLAGS   = -Weverything # Only works on Clang
 endif
 
 .PHONY: all clean distclean debug release
