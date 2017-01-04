@@ -79,9 +79,9 @@ $(BIN): $(OBJ) | $(bindir)
 	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Compiling in a single step often allows better compiler optimization.
-#$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
-#	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
-#	$(UPDATEDEPS)
+$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
+	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+	$(UPDATEDEPS)
 
 $(objdir)/%.o: $(asmdir)/%.s | $(objdir)
 	$(CC) -c $< -o $@ $(ASFLAGS)
