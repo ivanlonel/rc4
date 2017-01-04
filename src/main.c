@@ -10,10 +10,10 @@
 #   include <fcntl.h>
 #   define SET_BINARY_MODE(handle) (_setmode(_fileno(handle), _O_BINARY) == -1 ? NULL : handle)
 #else
-#   define SET_BINARY_MODE(handle) (handle)
+#   define SET_BINARY_MODE(handle) handle
 #endif
 
-#define BUF_SIZE 32768u
+#define BUF_SIZE 0x8000u /*32768u*/
 
 int main(int argc, char *argv[]) {
     rc4_key_t key;
@@ -21,13 +21,13 @@ int main(int argc, char *argv[]) {
     byte_t seed[SEED_SIZE];
     FILE *input, *output;
     size_t i, n;
-    short unsigned hex;
+    unsigned hex;
     char data[SEED_SIZE * 2 + 1] = "";
     /*char digit[3] = "00";
     char *p;*/
 
     if (argc < 2) {
-        (void) fprintf(stderr, "Usage: %s hexadecimal_seed [input_file [output_file]]\n", argv[0]);
+        fprintf(stderr, "Usage: %s hexadecimal_seed [input_file [output_file]]\n", argv[0]);
         return EXIT_FAILURE;
     }
 
@@ -36,12 +36,13 @@ int main(int argc, char *argv[]) {
      *If it's odd, reserve only the last position for the null terminator. */
     n = strlen(strncat(data, argv[1], sizeof data - 2 + (sizeof data & 1)));
 
-    if (n < strlen(argv[1])) { /*"%zu" specifier for size_t not implemented on ISO C90.*/
-        (void) fprintf(stderr, "Seed should have %lu hexadecimal digits or less. Entry's been truncated.\n", (long unsigned) n);
+    if (n < strlen(argv[1])) {
+        fprintf(stderr, "Seed should be %lu digits or less. Entry's been truncated.\n", (long unsigned) n);
+        /*fprintf(stderr, "Seed should be %zu digits or less. Entry's been truncated.\n", n);*/ /*ISO C99*/
     }
 
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
-        (void) fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", data);
+        fprintf(stderr, "Key \"%s\" contains non-hexadecimal characters.\n", data);
         return EXIT_FAILURE;
     }
 
@@ -54,11 +55,10 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        /*Using a short unsigned intermediate variable because SCNxLEAST8 may not be defined.*/
-        (void) sscanf(data + i * 2, "%2hx", &hex);
-        seed[i] = (byte_t) hex;
-        /*Alternative way, without using inttypes.h:
-        seed[i] = (byte_t) strtoul(strncpy(digit, data + i * 2, 2), &p, 16);*/
+        (void) sscanf(data + i * 2, "%2x", &hex);
+	seed[i] = (byte_t) hex;
+        /*(void) sscanf(data + i * 2, "%2hhx", &seed[i]);*/ /*ISO C99*/
+        /*seed[i] = (byte_t) strtoul(strncpy(digit, data + i * 2, 2), &p, 16);*/ /*Alternative*/
     }
 
     prepare_key(seed, n, &key);
@@ -77,21 +77,15 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    /*while (!feof(input)) {
-        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
-        rc4(buf, i, &key);
-        (void) fwrite(buf, sizeof buf[0], i, output);
-    }*/
     do {
         i = fread(buf, sizeof buf[0], BUF_SIZE, input);
         rc4(buf, i, &key);
     } while (fwrite(buf, sizeof buf[0], i, output) == BUF_SIZE);
-    /*i = fread(buf, sizeof buf[0], BUF_SIZE, input);
-    while (i > 0) {
+    /*while (!feof(input)) {
+        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
         rc4(buf, i, &key);
         (void) fwrite(buf, sizeof buf[0], i, output);
-        i = fread(buf, sizeof buf[0], BUF_SIZE, input);
-    }*/
+    }*/ /*Alternative*/
 
     if (ferror(input)) {
         perror("Error reading from input stream");

@@ -30,24 +30,25 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 UPDATEDEPS   = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
-WFLAGS      := -Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=2 -Wstrict-overflow=5 \
+WFLAGS      := $(if $(shell $(CC) --version 2>&1 | $(MATCH) clang),-Weverything -Wno-disabled-macro-expansion, \
+	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 \
 	-Wpadded -Winline -Wredundant-decls -Wcast-qual -Wcast-align -Wfloat-equal -Wlogical-op \
 	-Winit-self -Wpointer-arith -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
-	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition
+	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)
 
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
-CFLAGS      := -pipe $(if $(shell $(CC) --version 2>&1 | $(MATCH) "clang"),-Weverything,$(WFLAGS))
-ASFLAGS     :=
+CFLAGS      := -pipe $(WFLAGS)
+ASFLAGS     := 
 LDFLAGS     := -L$(libdir)
 
 RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 RLDFLAGS    := -flto -s
-DCFLAGS     := -g3 $(if $(shell $(CC) --version 2>&1 | $(MATCH) "clang"),-fstandalone-debug,-Og)
+DCFLAGS     := -g3 $(if $(shell $(CC) --version 2>&1 | $(MATCH) clang),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
 # Flags not working on MacOSX
-ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) "Darwin"))
+ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
 	RCFLAGS  += -ffunction-sections -fdata-sections
 	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)

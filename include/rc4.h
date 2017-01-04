@@ -2,11 +2,10 @@
 #define RC4_H
 
 #include <stdlib.h>
-#include <stdint.h>
 
-#define SEED_SIZE (UINT_LEAST8_MAX + 1)
+#define SEED_SIZE 256
 
-typedef uint_least8_t byte_t;
+typedef unsigned char byte_t;
 
 typedef struct rc4_key {
     byte_t x;
