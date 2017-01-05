@@ -5,6 +5,7 @@ set CC_PATH=C:\mingw-w64\x86_64-6.2.0-release-posix-seh-rt_v5-rev1\mingw64\bin
 ::set CC_PATH=C:\mingw-w64\x86_64-5.4.0-release-posix-seh-rt_v5-rev0\mingw64\bin
 ::set CC_PATH=C:\mingw-w64\x86_64-4.9.3-release-posix-seh-rt_v4-rev1\mingw64\bin
 ::set CC_PATH=C:\Dev-Cpp\MinGW64\bin
+::set CC_PATH=C:\CodeBlocks\MinGW\bin
 ::set CC_PATH=C:\cygwin64\bin
 
 REM Where to look for executables mentioned in the makefile, like 'rm', 'mv', 'grep', 'uname' and even 'make' itself if they aren't in CC_PATH already

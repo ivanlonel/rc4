@@ -6,11 +6,12 @@
 
 /*Modify a standard I/O stream mode to binary, since freopen(NULL, ...) doesn't work on Windows.*/
 #ifdef _WIN32
-#   include <io.h>
-#   include <fcntl.h>
-#   define SET_BINARY_MODE(handle) (_setmode(_fileno(handle), _O_BINARY) == -1 ? NULL : handle)
+# include <io.h>
+# include <fcntl.h>
+# define FILE_NO(handle) (handle == stdin ? 0 : handle == stdout ? 1 : handle == stderr ? 2 : -1)
+# define SET_BINARY_MODE(handle) (_setmode(FILE_NO(handle), _O_BINARY) == -1 ? NULL : handle)
 #else
-#   define SET_BINARY_MODE(handle) handle
+# define SET_BINARY_MODE(handle) handle
 #endif
 
 #define BUF_SIZE 0x8000u /*32768u*/

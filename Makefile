@@ -31,9 +31,9 @@ DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 UPDATEDEPS   = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
 WFLAGS      := $(if $(shell $(CC) --version 2>&1 | $(MATCH) clang),-Weverything -Wno-disabled-macro-expansion, \
-	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 \
-	-Wpadded -Winline -Wredundant-decls -Wcast-qual -Wcast-align -Wfloat-equal -Wlogical-op \
-	-Winit-self -Wpointer-arith -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
+	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 -Wredundant-decls \
+	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum \
+	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)
 
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
