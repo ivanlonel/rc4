@@ -8,11 +8,15 @@
 #ifdef _WIN32
 # include <io.h>
 # include <fcntl.h>
-# define FILE_NO(handle) (handle == stdin ? 0 : handle == stdout ? 1 : handle == stderr ? 2 : -1)
+# ifdef __STRICT_ANSI__
+#  define FILE_NO(handle) (handle == stdin ? 0 : handle == stdout ? 1 : handle == stderr ? 2 : -1)
+# else
+#  define FILE_NO(handle) _fileno(handle)
+# endif /* defined __STRICT_ANSI__ */
 # define SET_BINARY_MODE(handle) (_setmode(FILE_NO(handle), _O_BINARY) == -1 ? NULL : handle)
 #else
 # define SET_BINARY_MODE(handle) handle
-#endif
+#endif /* defined _WIN32 */
 
 #define BUF_SIZE 0x8000u /*32768u*/
 
