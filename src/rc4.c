@@ -6,7 +6,7 @@ static void swap_byte(byte_t *x, byte_t *y) {
     *y = t;
 }
 
-void prepare_key(byte_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
+void prepare_key(const byte_t *key_data_ptr, const size_t key_data_len, rc4_key_t *key) {
     size_t counter;
     byte_t index1 = 0;
     byte_t index2 = 0;
@@ -24,7 +24,7 @@ void prepare_key(byte_t *key_data_ptr, size_t key_data_len, rc4_key_t *key) {
     }
 }
 
-void rc4(byte_t *buffer_ptr, size_t buffer_len, rc4_key_t *key) {
+void rc4(byte_t *buffer_ptr, const size_t buffer_len, rc4_key_t *key) {
     size_t counter;
 
     for(counter = 0; counter < buffer_len; counter++) {

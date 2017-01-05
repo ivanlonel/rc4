@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*This is necessary to modify stdin and stdout mode to binary, since freopen(NULL, ...) doesn't work on Windows.*/
+/*Modify a standard I/O stream mode to binary, since freopen(NULL, ...) doesn't work on Windows.*/
 #ifdef _WIN32
 #   include <io.h>
 #   include <fcntl.h>
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     byte_t seed[SEED_SIZE];
     FILE *input, *output;
     size_t i, n;
-    unsigned hex;
+    long unsigned hex;
     char data[SEED_SIZE * 2 + 1] = "";
     /*char digit[3] = "00";
     char *p;*/
@@ -55,10 +55,13 @@ int main(int argc, char *argv[]) {
 
     /*Converting hexadecimal char string to byte array.*/
     for (i = 0; i < n; i++) {
-        (void) sscanf(data + i * 2, "%2x", &hex);
-	seed[i] = (byte_t) hex;
-        /*(void) sscanf(data + i * 2, "%2hhx", &seed[i]);*/ /*ISO C99*/
-        /*seed[i] = (byte_t) strtoul(strncpy(digit, data + i * 2, 2), &p, 16);*/ /*Alternative*/
+        /*if ((hex = strtoul(strncpy(digit, data + i * 2, 2), &p, 16)) == -1LU) {*/ /*Alternative*/
+        if (sscanf(data + i * 2, "%2lx", &hex) == EOF) {
+            perror("Couldn't parse seed");
+            return EXIT_FAILURE;
+        }
+
+        seed[i] = (byte_t) hex;
     }
 
     prepare_key(seed, n, &key);
@@ -84,7 +87,7 @@ int main(int argc, char *argv[]) {
     /*while (!feof(input)) {
         i = fread(buf, sizeof buf[0], BUF_SIZE, input);
         rc4(buf, i, &key);
-        (void) fwrite(buf, sizeof buf[0], i, output);
+        fwrite(buf, sizeof buf[0], i, output);
     }*/ /*Alternative*/
 
     if (ferror(input)) {

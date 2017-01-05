@@ -13,8 +13,8 @@ typedef struct rc4_key {
     byte_t state[SEED_SIZE];
 } rc4_key_t;
 
-void prepare_key(byte_t*, size_t, rc4_key_t*);
+void prepare_key(const byte_t*, const size_t, rc4_key_t*);
 
-void rc4(byte_t*, size_t, rc4_key_t*);
+void rc4(byte_t*, const size_t, rc4_key_t*);
 
 #endif /* RC4_H */
