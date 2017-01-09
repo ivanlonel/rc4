@@ -1,12 +1,12 @@
 #include "rc4.h"
 
-static void swap_byte(byte_t *x, byte_t *y) {
+static __inline__ void swap_byte(byte_t *x, byte_t *y) {
     byte_t t = *x;
     *x = *y;
     *y = t;
 }
 
-void prepare_key(const byte_t *RESTRICT_IF_SUPPORTED key_data_ptr, const size_t key_data_len, rc4_key_t *RESTRICT_IF_SUPPORTED key) {
+void prepare_key(const byte_t *__restrict__ key_data_ptr, const size_t key_data_len, rc4_key_t *__restrict__ key) {
     size_t counter;
 
     key->x = key->y = 0; /* Initializing for temporary use inside this function. */
@@ -23,7 +23,7 @@ void prepare_key(const byte_t *RESTRICT_IF_SUPPORTED key_data_ptr, const size_t 
     key->x = key->y = 0; /* Initializing for external use. */
 }
 
-void rc4(byte_t *RESTRICT_IF_SUPPORTED buffer_ptr, const size_t buffer_len, rc4_key_t *RESTRICT_IF_SUPPORTED key) {
+void rc4(byte_t *__restrict__ buffer_ptr, const size_t buffer_len, rc4_key_t *__restrict__ key) {
     size_t counter;
 
     for(counter = 0; counter < buffer_len; counter++) {
