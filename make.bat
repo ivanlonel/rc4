@@ -23,3 +23,11 @@ echo ;%PATH%; | find /i /c ";%UTILS_PATH%;" >nul || set PATH=%PATH%;%UTILS_PATH%
 
 REM Call 'make' with all the arguments passed to this batch script
 %MK_EXEC% BINNAME=rc4.exe %*
+
+
+::set OUTPUT="/Ox /MD /Febin\rc4Dynamic.exe"
+::set OUTPUT="/Ox /MT /Febin\rc4Static.exe"
+::set OUTPUT="/Z7 /MDd /Febin\rc4DynamicDebug.exe"
+::set OUTPUT="/Z7 /MTd /Febin\rc4StaticDebug.exe"
+
+::cl src\*.c /Iinclude %OUTPUT% /Za /MP /Wall /D_CRT_SECURE_NO_WARNINGS /nologo /analyze:stacksize 65536

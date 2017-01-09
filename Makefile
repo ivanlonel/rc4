@@ -111,3 +111,5 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 ifeq (,$(filter $(MAKECMDGOALS), clean distclean))
 -include $(DEP) # Using '-' to avoid failing on non-existent files.
 endif
+
+-include test.mk
