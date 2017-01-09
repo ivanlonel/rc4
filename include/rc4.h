@@ -3,13 +3,11 @@
 
 #include <stdlib.h>
 
-#ifndef __GNUC__
+#if !defined (__GNUC__) && !defined (__restrict__)
 # if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #  define __restrict__ restrict
-#  define __inline__ inline
 # else
 #  define __restrict__
-#  define __inline__
 # endif
 #endif
 

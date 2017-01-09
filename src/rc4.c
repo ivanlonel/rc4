@@ -1,5 +1,13 @@
 #include "rc4.h"
 
+#if !defined (__GNUC__) && !defined (__inline__)
+# if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#  define __inline__ inline
+# else
+#  define __inline__
+# endif
+#endif
+
 static __inline__ void swap_byte(byte_t *x, byte_t *y) {
     byte_t t = *x;
     *x = *y;
