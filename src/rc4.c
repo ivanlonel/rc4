@@ -19,8 +19,9 @@ void prepare_key(const byte_t *__restrict__ key_data_ptr, const size_t key_data_
 
     key->x = key->y = 0; /* Initializing for temporary use inside this function. */
 
-    for(counter = 0; counter < SEED_SIZE; counter++)
+    for(counter = 0; counter < SEED_SIZE; counter++) {
         key->state[counter] = (byte_t) counter;
+    }
 
     for(counter = 0; counter < SEED_SIZE; counter++) {
         key->y = (byte_t) ((key_data_ptr[key->x] + key->state[counter] + key->y) % SEED_SIZE);

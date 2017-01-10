@@ -32,4 +32,4 @@ REM Call 'make' with all the arguments passed to this batch script
 ::set OUTPUT="/Z7 /MTd"	REM /MTd Defines _DEBUG and _MT. This option also causes the compiler to place the library name LIBCMTD.lib into the .obj file so that the linker will use LIBCMTD.lib to resolve external symbols.
 ::set OUTPUT="/Z7 /MDd"	REM /MDd Defines _DEBUG, _MT, and _DLL and causes the application to use the debug multithread-specific and DLL-specific version of the run-time library. It also causes the compiler to place the library name MSVCRTD.lib into the .obj file.
 
-::cl src\*.c /Iinclude /Fo.o\ /Febin\rc4.exe /Za %OUTPUT% /MP /nologo /Wall /D_CRT_SECURE_NO_WARNINGS /analyze:stacksize 65536
+::cl src\*.c /Iinclude /Fo.o\ /Febin\rc4.exe /Za %OUTPUT% /MP /nologo /Wall /D_CRT_SECURE_NO_WARNINGS /GA /Gw /GL /analyze:stacksize 65536

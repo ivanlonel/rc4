@@ -1,7 +1,7 @@
 #ifndef RC4_H
 #define RC4_H
 
-#include <stdlib.h>
+#include <stddef.h> /* size_t */
 
 #if !defined (__GNUC__) && !defined (__restrict__)
 # if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L

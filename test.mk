@@ -42,7 +42,7 @@ optimize: all
 
 ifneq (,$(ISCLANG))
 $(PROFDATA):
-	llvm-profdata merge -output=$@ $(testdir)
+	llvm-profdata merge -output=$@ $(testdir)/*.profraw
 endif
 
 analyze: debug | $(testdir)
