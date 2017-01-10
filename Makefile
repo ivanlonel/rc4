@@ -8,6 +8,7 @@ MATCH       := grep -E -i
 BINNAME     := rc4
 SRCNAMES    := rc4.c main.c
 
+#prefix      := $(abspath .)
 prefix      := .
 exec_prefix := $(prefix)
 
@@ -25,12 +26,17 @@ SRC         := $(if $(strip $(SRCNAMES)),$(addprefix $(srcdir)/,$(SRCNAMES)),$(w
 OBJ         := $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
 DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
+ISCLANG     := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
+
+DIR          = $(@D)
+
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
 DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
-UPDATEDEPS   = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
+POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
+PRECOMPILE   =
 
-WFLAGS      := $(if $(shell $(CC) --version 2>&1 | $(MATCH) clang),-Weverything -Wno-disabled-macro-expansion, \
+WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion, \
 	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 -Wredundant-decls \
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum \
 	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
@@ -44,7 +50,7 @@ LDFLAGS     := -L$(libdir)
 RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident \
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 RLDFLAGS    := -flto -s
-DCFLAGS     := -g3 $(if $(shell $(CC) --version 2>&1 | $(MATCH) clang),-fstandalone-debug,-Og)
+DCFLAGS     := -g3 $(if $(ISCLANG),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
 # Flags not working on MacOSX
@@ -74,37 +80,42 @@ distclean: clean
 clean:
 	$(RM) $(objdir) $(asmdir) $(preprocdir) $(depdir)
 
-.SUFFIXES: # Clearing the suffix list to avoid confusion with unexpected implicit rules
-
-$(BIN): $(OBJ) | $(bindir)
-	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
-
-# Compiling in a single step often allows better compiler optimization.
-$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d | $(objdir)
-	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
-	$(UPDATEDEPS)
-
-$(objdir)/%.o: $(asmdir)/%.s | $(objdir)
-	$(CC) -c $< -o $@ $(ASFLAGS)
-	$(UPDATEDEPS)
-
-$(asmdir)/%.s: $(preprocdir)/%.i | $(asmdir)
-	$(CC) -S $< -o $@ $(CFLAGS)
-
-$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $(preprocdir)
-	$(CC) -E $< -o $@ $(DEPFLAGS) $(CPPFLAGS)
-
-# Create a pattern rule with an empty recipe,
-# so that make won’t fail if some dependency file doesn’t exist.
-# Create the dependencies directory if it still doesn't exist (order-only prerequisite).
-$(depdir)/%.d: | $(depdir) ;
+$(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
+	$(MKDIR) $@
 
 # Mark files matching the patterns below as precious to make
 # so they won’t be automatically deleted as intermediate files.
 .PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i $(asmdir)/%.s
 
-$(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
-	$(MKDIR) $@
+# Clearing the suffix list to avoid confusion with unexpected implicit rules.
+.SUFFIXES:
+
+# Enable a second expansion of prerequisites for the targets below, between read-in and target-update phases.
+# The prerequisites taking advantage of this are represented in escaped variable references (two $'s).
+.SECONDEXPANSION:
+
+$(BIN): $(OBJ) | $$(DIR)
+	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+
+# Compiling in a single step often allows better compiler optimization.
+$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
+	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+	$(POSTCOMPILE)
+
+$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
+	$(CC) -c $< -o $@ $(ASFLAGS)
+	$(POSTCOMPILE)
+
+$(asmdir)/%.s: $(preprocdir)/%.i | $$(DIR)
+	$(CC) -S $< -o $@ $(CFLAGS)
+
+$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
+	$(CC) -E $< -o $@ $(DEPFLAGS) $(CPPFLAGS)
+
+# Create a pattern rule with an empty recipe,
+# so that make won’t fail if some dependency file doesn’t exist.
+# Create the dependencies directory if it still doesn't exist (order-only prerequisite).
+$(depdir)/%.d: | $$(DIR) ;
 
 # Include rules from the dependency files that exist,
 # unless the current goal doesn't need them.
