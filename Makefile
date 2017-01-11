@@ -44,7 +44,6 @@ WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion, \
 
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
 CFLAGS      := -pipe $(WFLAGS)
-ASFLAGS     := 
 LDFLAGS     := -L$(libdir)
 
 RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident \
@@ -83,34 +82,32 @@ clean:
 $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 	$(MKDIR) $@
 
+.SUFFIXES: # Clear the suffix list to avoid confusion with unexpected implicit rules.
+
 # Mark files matching the patterns below as precious to make
 # so they won’t be automatically deleted as intermediate files.
 .PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i $(asmdir)/%.s
-
-# Clearing the suffix list to avoid confusion with unexpected implicit rules.
-.SUFFIXES:
 
 # Enable a second expansion of prerequisites for the targets below, between read-in and target-update phases.
 # The prerequisites taking advantage of this are represented in escaped variable references (two $'s).
 .SECONDEXPANSION:
 
 $(BIN): $(OBJ) | $$(DIR)
-	$(CC) $^ -o $@ $(LDFLAGS) $(LDLIBS)
+	$(CC) $^ $(LDFLAGS) -o $@ $(LDLIBS)
 
-# Compiling in a single step often allows better compiler optimization.
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-	$(CC) -c $< -o $@ $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS)
+	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION)
 	$(POSTCOMPILE)
 
-$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
-	$(CC) -c $< -o $@ $(ASFLAGS)
-	$(POSTCOMPILE)
-
-$(asmdir)/%.s: $(preprocdir)/%.i | $$(DIR)
-	$(CC) -S $< -o $@ $(CFLAGS)
-
-$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-	$(CC) -E $< -o $@ $(DEPFLAGS) $(CPPFLAGS)
+#$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
+#	$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION)
+#	$(POSTCOMPILE)
+#
+#$(asmdir)/%.s: $(preprocdir)/%.i | $$(DIR)
+#	$(CC) -S $< $(CFLAGS) -o $@
+#
+#$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
+#	$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
