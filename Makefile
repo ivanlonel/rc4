@@ -36,7 +36,7 @@ DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 PRECOMPILE   =
 
-WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion, \
+WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion -Wno-long-long, \
 	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 -Wredundant-decls \
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum \
 	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
