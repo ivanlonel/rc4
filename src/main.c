@@ -50,7 +50,7 @@ static size_t hex_str_to_byte_array (const char *__restrict__ str, size_t length
 
     if ((str_offset = length % (2 * sizeof hex)) != 0) {
         if ((hex = strtoul(strncat(buf, str, str_offset), &str_ptr, 16)) == ULONG_MAX || errno != 0) {
-            return SIZE_MAX; /* (str_offset < sizeof hex) implies (hex < ULONG_MAX) unless strtoul has failed. */
+            return SIZE_MAX; /* (str_offset < 2 * sizeof hex) implies (hex < ULONG_MAX) unless strtoul has failed. */
         }
         arr_offset = (byte_t) (str_offset / 2 + str_offset % 2);
         for (i = 0; i < arr_offset; i++) {
