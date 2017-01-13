@@ -14,6 +14,8 @@ ARGS     := $(KEY) $(INPUT) $(OUTPUT)
 
 COMMAND  := $(BIN) $(ARGS)
 
+LINT     := splint
+
 VALGRIND := valgrind -v --time-stamp=yes --track-fds=yes
 
 MCHKOPTS := --leak-check=full --show-leak-kinds=all --track-origins=yes --expensive-definedness-checks=yes
@@ -25,7 +27,7 @@ HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/massif.out.%
 
 PROFDATA := $(addprefix $(testdir)/,$(if $(ISCLANG),default.profdata,$(patsubst %.o,%.gcda,$(OBJ))))
 
-.PHONY: cleantests memcheck callgrind massif analyze optimize profile run
+.PHONY: cleantests memcheck callgrind massif analyze lint optimize profile run
 
 run: all
 	$(COMMAND)
@@ -33,16 +35,18 @@ run: all
 profile: DIR     += $(testdir)
 profile: CFLAGS  += -fprofile-generate=$(testdir)
 profile: LDFLAGS += -fprofile-generate=$(testdir)
-profile: all
+profile: debug
 
 optimize: PRECOMPILE += $(PROFDATA)
 optimize: CFLAGS     += -fprofile-use=$(testdir)
 optimize: LDFLAGS    += -fprofile-use=$(testdir)
-optimize: all
+optimize: release
 
-ifneq (,$(ISCLANG))
 $(PROFDATA):
+ifneq (,$(ISCLANG))
 	llvm-profdata merge -output=$@ $(testdir)/*.profraw
+else
+	@echo "Warning: Couldn't find profiling information file $@."
 endif
 
 analyze: debug | $(testdir)
@@ -56,6 +60,9 @@ callgrind: analyze
 
 massif: TOOL := $(HEAPOPTS)
 massif: analyze
+
+lint:
+	$(LINT) $(SRC) $(LINTFLAGS) $(CPPFLAGS) $(TARGET_ARCH)
 
 cleantests:
 	find $(testdir) -mindepth 1 -maxdepth 1 $(addprefix ! -name ,$(PERSIST)) -exec $(RM) {} \;

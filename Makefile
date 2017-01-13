@@ -80,7 +80,7 @@ clean:
 	$(RM) $(objdir) $(asmdir) $(preprocdir) $(depdir)
 
 $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
-	$(MKDIR) $@
+	@$(MKDIR) $@
 
 .SUFFIXES: # Clear the suffix list to avoid confusion with unexpected implicit rules.
 
@@ -93,21 +93,21 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 .SECONDEXPANSION:
 
 $(BIN): $(OBJ) | $$(DIR)
-	$(CC) $^ $(LDFLAGS) -o $@ $(LDLIBS)
+	$(CC) $^ $(LDFLAGS) -o $@ $(LDLIBS) $(TARGET_ARCH)
 
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION)
-	$(POSTCOMPILE)
+	@$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
+	@$(POSTCOMPILE)
 
 #$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
-#	$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION)
-#	$(POSTCOMPILE)
+#	@$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
+#	@$(POSTCOMPILE)
 #
 #$(asmdir)/%.s: $(preprocdir)/%.i | $$(DIR)
-#	$(CC) -S $< $(CFLAGS) -o $@
+#	@$(CC) -S $< $(CFLAGS) -o $@ $(TARGET_ARCH)
 #
 #$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-#	$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@
+#	@$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
