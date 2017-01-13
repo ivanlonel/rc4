@@ -5,7 +5,6 @@
 #include <string.h>
 #include <errno.h>
 
-
 #ifdef _WIN32 /* Modify a standard I/O stream mode to binary, since freopen(NULL, ...) doesn't work on Windows. */
 # include <io.h>
 # include <fcntl.h>
@@ -19,25 +18,29 @@
 # define SET_BINARY_MODE(handle) handle
 #endif /* defined _WIN32 */
 
-#ifndef CHAR_BIT
+#ifndef CHAR_BIT /* limits.h */
 # define CHAR_BIT 8
 #endif
 
-#ifndef ULONG_MAX
-# define ULONG_MAX (-1LU)
-#endif
-
-#ifndef SIZE_MAX
+#ifndef SIZE_MAX /* stdint.h */
 # define SIZE_MAX ((size_t) -1)
 #endif
 
-#define BUF_SIZE 0x8000u /*32768u*/
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+# define LONGEST long long
+# define STRTOULEST strtoull
+#else
+# define LONGEST long
+# define STRTOULEST strtoul
+#endif
+
+# define BUF_SIZE 0x8000u /* 32768u */
 
 static size_t hex_str_to_byte_array (const char *__restrict__ str, size_t length, byte_t *__restrict__ array) {
     size_t i, j;
     byte_t str_offset;
     byte_t arr_offset = 0;
-    long unsigned hex;
+    unsigned LONGEST hex;
     char buf[2 * sizeof hex + 1] = "";
     char *str_ptr;
     int temp_err = errno;
@@ -49,8 +52,9 @@ static size_t hex_str_to_byte_array (const char *__restrict__ str, size_t length
     }
 
     if ((str_offset = length % (2 * sizeof hex)) != 0) {
-        if ((hex = strtoul(strncat(buf, str, str_offset), &str_ptr, 16)) == ULONG_MAX || errno != 0) {
-            return SIZE_MAX; /* (str_offset < 2 * sizeof hex) implies (hex < ULONG_MAX) unless strtoul has failed. */
+		hex = STRTOULEST(strncat(buf, str, str_offset), &str_ptr, 16);
+        if (errno != 0) {
+            return SIZE_MAX;
         }
         arr_offset = (byte_t) (str_offset / 2 + str_offset % 2);
         for (i = 0; i < arr_offset; i++) {
@@ -60,7 +64,7 @@ static size_t hex_str_to_byte_array (const char *__restrict__ str, size_t length
 
     for (j = 0; j < length / (2 * sizeof hex); j++) {
         buf[0] = '\0';
-        hex = strtoul(strncat(buf, str + str_offset + j * (2 * sizeof hex), 2 * sizeof hex), &str_ptr, 16);
+        hex = STRTOULEST(strncat(buf, str + str_offset + j * (2 * sizeof hex), 2 * sizeof hex), &str_ptr, 16);
         if (errno != 0) {
             return SIZE_MAX;
         }
@@ -89,12 +93,8 @@ int main(int argc, char *argv[]) {
 
     n = strlen(strncat(data, argv[1], sizeof data - 1));
 
-    if (n < strlen(argv[1])) {
-#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-        (void) fprintf(stderr, "Seed should be %zu digits or less. Entry's been truncated.\n", n);
-#else
-        (void) fprintf(stderr, "Seed should be %lu digits or less. Entry's been truncated.\n", (long unsigned) n);
-#endif
+    if (strlen(argv[1]) > sizeof data - 1) {
+        (void) fprintf(stderr, "Seed should be %lu digits or less. Entry's been truncated.\n", (unsigned long) n);
     }
 
     if (data[strspn(data, "0123456789abcdefABCDEF")] != '\0') {
