@@ -25,7 +25,8 @@ CALLOPTS := --tool=callgrind --branch-sim=yes --cache-sim=yes --dump-instr=yes -
 
 HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/massif.out.%p
 
-PROFDATA := $(addprefix $(testdir)/,$(if $(ISCLANG),default.profdata,$(patsubst %.o,%.gcda,$(OBJ))))
+PROFDATA := $(addprefix $(testdir)/, \
+	$(if $(ISCLANG),default.profdata,$(subst $(exec_prefix)/,,$(OBJ:%.o=%.gcda))))
 
 .PHONY: cleantests memcheck callgrind massif analyze lint optimize profile run
 
@@ -43,10 +44,10 @@ optimize: LDFLAGS    += -fprofile-use=$(testdir)
 optimize: release
 
 $(PROFDATA):
-ifneq (,$(ISCLANG))
-	llvm-profdata merge -output=$@ $(testdir)/*.profraw
+ifeq (,$(ISCLANG))
+	$(warning Could not find profiling information file $@)
 else
-	@echo "Warning: Couldn't find profiling information file $@."
+	llvm-profdata merge -output=$@ $(testdir)/*.profraw
 endif
 
 analyze: debug | $(testdir)

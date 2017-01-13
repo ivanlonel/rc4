@@ -28,7 +28,7 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
 ISCLANG     := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 
-DIR          = $(@D)
+DIR          = $(patsubst %/,%,$(dir $@))
 
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
@@ -80,7 +80,7 @@ clean:
 	$(RM) $(objdir) $(asmdir) $(preprocdir) $(depdir)
 
 $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
-	@$(MKDIR) $@
+	$(MKDIR) $@
 
 .SUFFIXES: # Clear the suffix list to avoid confusion with unexpected implicit rules.
 
@@ -96,8 +96,8 @@ $(BIN): $(OBJ) | $$(DIR)
 	$(CC) $^ $(LDFLAGS) -o $@ $(LDLIBS) $(TARGET_ARCH)
 
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-	@$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
-	@$(POSTCOMPILE)
+	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
+	$(POSTCOMPILE)
 
 #$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
 #	@$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
