@@ -47,6 +47,7 @@ $(PROFDATA):
 ifeq (,$(ISCLANG))
 	$(warning Could not find profiling information file $@)
 else
+	# It may be necessary to add llvm-profdata's path (e.g. /usr/lib/llvm-3.8/bin) to the PATH manually. 
 	llvm-profdata merge -output=$@ $(testdir)/*.profraw
 endif
 

@@ -99,15 +99,15 @@ $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
 	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
 	$(POSTCOMPILE)
 
-#$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
-#	@$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
-#	@$(POSTCOMPILE)
-#
-#$(asmdir)/%.s: $(preprocdir)/%.i | $$(DIR)
-#	@$(CC) -S $< $(CFLAGS) -o $@ $(TARGET_ARCH)
-#
-#$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-#	@$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@
+$(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
+	$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
+	$(POSTCOMPILE)
+
+$(asmdir)/%.s: $(preprocdir)/%.i $$(PRECOMPILE) | $$(DIR)
+	$(CC) -S $< $(CFLAGS) -o $@ $(TARGET_ARCH)
+
+$(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $$(DIR)
+	$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@ $(TARGET_ARCH)
 
 # Create a pattern rule with an empty recipe,
 # so that make won’t fail if some dependency file doesn’t exist.
