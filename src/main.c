@@ -56,7 +56,7 @@ static size_t hex_str_to_byte_array (const char *__restrict__ str, size_t length
         if (errno != 0) {
             return SIZE_MAX;
         }
-        arr_offset = (byte_t) (str_offset / 2 + str_offset % 2);
+        arr_offset = (byte_t) (str_offset - str_offset / 2); /* arr_offset = str_offset / 2 + str_offset % 2 */
         for (i = 0; i < arr_offset; i++) {
             array[arr_offset - i - 1] = (byte_t) (hex >> (i * CHAR_BIT * sizeof *array));
         }

@@ -12,6 +12,10 @@ SRCNAMES    := rc4.c main.c
 prefix      := .
 exec_prefix := $(prefix)
 
+# Sanitizing the above values
+prefix      := $(if $(strip $(prefix)),$(patsubst %/,%,$(strip $(prefix))),.)
+exec_prefix := $(if $(strip $(exec_prefix)),$(patsubst %/,%,$(strip $(exec_prefix))),.)
+
 srcdir      := $(prefix)/src
 includedir  := $(prefix)/include
 libdir      := $(exec_prefix)/lib
@@ -21,12 +25,12 @@ asmdir      := $(prefix)/.s
 preprocdir  := $(prefix)/.i
 depdir      := $(prefix)/.d
 
-BIN         := $(addprefix $(bindir)/,$(BINNAME))
-SRC         := $(if $(strip $(SRCNAMES)),$(addprefix $(srcdir)/,$(SRCNAMES)),$(wildcard $(srcdir)/*.*))
+BIN         := $(addprefix $(bindir)/,$(strip $(BINNAME)))
+SRC         := $(if $(strip $(SRCNAMES)),$(addprefix $(srcdir)/,$(strip $(SRCNAMES))),$(wildcard $(srcdir)/*.*))
 OBJ         := $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
 DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
-ISCLANG     := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
+LLVM        := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 
 DIR          = $(patsubst %/,%,$(dir $@))
 
@@ -36,26 +40,26 @@ DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 PRECOMPILE   =
 
-WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion -Wno-long-long, \
-	-Wall -Wpedantic -Wextra -Wshadow -Wconversion -Wformat=1 -Wstrict-overflow=5 -Wredundant-decls \
-	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum \
-	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations \
+WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion, -Wall -Wextra\
+	-Wpedantic -Wno-long-long -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
+	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
+	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations\
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)
 
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
 CFLAGS      := -pipe $(WFLAGS)
 LDFLAGS     := -L$(libdir)
 
-RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident \
+RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident\
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 RLDFLAGS    := -flto -s
-DCFLAGS     := -g3 $(if $(ISCLANG),-fstandalone-debug,-Og)
+DCFLAGS     := -g3 $(if $(LLVM),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
 	RCFLAGS  += -ffunction-sections -fdata-sections
-	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none \
+	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none\
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
 endif
 
@@ -93,7 +97,7 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 .SECONDEXPANSION:
 
 $(BIN): $(OBJ) | $$(DIR)
-	$(CC) $^ $(LDFLAGS) -o $@ $(LDLIBS) $(TARGET_ARCH)
+	$(CC) $^ $(LDFLAGS) -o $@ $(TARGET_ARCH) $(LDLIBS) $(LOADLIBES)
 
 $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
 	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
@@ -101,10 +105,10 @@ $(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
 
 $(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
 	$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
-	$(POSTCOMPILE)
 
 $(asmdir)/%.s: $(preprocdir)/%.i $$(PRECOMPILE) | $$(DIR)
 	$(CC) -S $< $(CFLAGS) -o $@ $(TARGET_ARCH)
+	$(POSTCOMPILE)
 
 $(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $$(DIR)
 	$(CC) -E $< $(DEPFLAGS) $(CPPFLAGS) -o $@ $(TARGET_ARCH)
@@ -114,10 +118,9 @@ $(preprocdir)/%.i: $(srcdir)/%.c $(depdir)/%.d | $$(DIR)
 # Create the dependencies directory if it still doesn't exist (order-only prerequisite).
 $(depdir)/%.d: | $$(DIR) ;
 
-# Include rules from the dependency files that exist,
-# unless the current goal doesn't need them.
-ifeq (,$(filter $(MAKECMDGOALS), clean distclean))
--include $(DEP) # Using '-' to avoid failing on non-existent files.
-endif
+# Using '-' to avoid failing on non-existent files.
+# Also messing with the path as a workaround to avoid triggering the target's prerequisite.
+# (Simply "-include $(DEP)" would create the $(depdir) directory even if the current goal didn't need it.)
+-include $(join $(dir $(DEP)),$(addprefix ./,$(notdir $(DEP))))
 
--include test.mk
+-include test.mak
