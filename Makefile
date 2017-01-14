@@ -30,7 +30,7 @@ SRC         := $(if $(strip $(SRCNAMES)),$(addprefix $(srcdir)/,$(strip $(SRCNAM
 OBJ         := $(patsubst $(srcdir)/%,$(objdir)/%.o,$(basename $(SRC)))
 DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
-LLVM        := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
+ISCLANG     := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 
 DIR          = $(patsubst %/,%,$(dir $@))
 
@@ -40,7 +40,7 @@ DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 PRECOMPILE   =
 
-WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion, -Wall -Wextra\
+WFLAGS      := $(if $(ISCLANG),-Weverything -Wno-disabled-macro-expansion -Wno-long-long, -Wall -Wextra\
 	-Wpedantic -Wno-long-long -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
 	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations\
@@ -53,7 +53,7 @@ LDFLAGS     := -L$(libdir)
 RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident\
 	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
 RLDFLAGS    := -flto -s
-DCFLAGS     := -g3 $(if $(LLVM),-fstandalone-debug,-Og)
+DCFLAGS     := -g3 $(if $(ISCLANG),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
 
 # Flags not working on MacOSX
