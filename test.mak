@@ -25,8 +25,7 @@ HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/massif.out.%
 
 COMMAND  := $(BIN) $(ARGS)
 
-PROFDATA := $(addprefix $(testdir)/,\
-	$(if $(ISCLANG),default.profdata,$(subst $(exec_prefix)/,,$(OBJ:%.o=%.gcda))))
+PROFDATA := $(addprefix $(testdir)/,$(if $(LLVM),default.profdata,$(subst $(exec_prefix)/,,$(OBJ:%.o=%.gcda))))
 
 .PHONY: cleantests memcheck callgrind massif analyze lint optimize profile run
 
@@ -44,7 +43,7 @@ optimize: LDFLAGS    += -fprofile-use=$(testdir)
 optimize: release
 
 $(PROFDATA):
-ifeq (,$(ISCLANG))
+ifeq (,$(LLVM))
 	$(warning Could not find profiling information file $@)
 else
 # It may be necessary to add llvm-profdata's path to the PATH environment variable manually. 
