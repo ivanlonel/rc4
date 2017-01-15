@@ -23,6 +23,8 @@ CALLOPTS := --tool=callgrind --branch-sim=yes --cache-sim=yes --dump-instr=yes -
 
 HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/massif.out.%p
 
+LINTFLAGS:= -checks
+
 COMMAND  := $(BIN) $(ARGS)
 
 PROFDATA := $(addprefix $(testdir)/,$(if $(LLVM),default.profdata,$(subst $(exec_prefix)/,,$(OBJ:%.o=%.gcda))))
