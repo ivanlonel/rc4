@@ -16,13 +16,13 @@
 typedef unsigned char byte_t;
 
 typedef struct rc4_key {
+    byte_t state[SEED_SIZE];
     byte_t x;
     byte_t y;
-    byte_t state[SEED_SIZE];
 } rc4_key_t;
 
-rc4_key_t prepare_key(const byte_t *__restrict, size_t);
+rc4_key_t prepare_key (const byte_t *__restrict, size_t);
 
-void rc4(byte_t *__restrict, size_t, rc4_key_t *__restrict);
+void rc4 (byte_t *__restrict, size_t, rc4_key_t *__restrict);
 
 #endif /* RC4_H */

@@ -35,9 +35,9 @@ run: all
 	$(COMMAND)
 
 profile: DIR     += $(testdir)
-profile: CFLAGS  += -fprofile-generate=$(testdir) -O1
-profile: LDFLAGS += -fprofile-generate=$(testdir)
-profile: debug
+profile: CFLAGS  += -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) 
+profile: LDFLAGS += -fprofile-generate=$(testdir) $(filter-out -rdynamic -s,$(DLDFLAGS) $(RLDFLAGS))
+profile: $(BIN)
 
 optimize: PRECOMPILE += $(PROFDATA)
 optimize: CFLAGS     += -fprofile-use=$(testdir)

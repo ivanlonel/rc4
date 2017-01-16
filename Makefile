@@ -40,6 +40,8 @@ DEPFLAGS     = -MT $@ -MF $(depdir)/$*.Td -MMD -MP
 POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 PRECOMPILE   =
 
+TARGET_ARCH := -mtune=native
+
 WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion -Wno-long-long, -Wall -Wextra\
 	-Wpedantic -Wno-long-long -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
@@ -47,11 +49,10 @@ WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion -Wno-long
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)
 
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
-CFLAGS      := -pipe $(WFLAGS)
+CFLAGS      := -pipe -fno-stack-protector $(WFLAGS)
 LDFLAGS     := -L$(libdir)
 
-RCFLAGS     := -flto -O2 -fomit-frame-pointer -fno-common -fno-ident\
-	-fno-unwind-tables -fno-asynchronous-unwind-tables -fno-stack-protector
+RCFLAGS     := -flto -O2 -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables
 RLDFLAGS    := -flto -s
 DCFLAGS     := -g3 $(if $(LLVM),-fstandalone-debug,-Og)
 DLDFLAGS    := $(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "MINGW|WINDOWS"),,-rdynamic)
