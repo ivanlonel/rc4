@@ -19,9 +19,9 @@ VALGRIND := valgrind -v --time-stamp=yes --track-fds=yes
 MCHKOPTS := --leak-check=full --show-leak-kinds=all --track-origins=yes --expensive-definedness-checks=yes
 
 CALLOPTS := --tool=callgrind --branch-sim=yes --cache-sim=yes --dump-instr=yes --collect-jumps=yes\
-	--compress-strings=no --callgrind-out-file=$(testdir)/callgrind.out.%p
+	--compress-strings=no --callgrind-out-file=$(testdir)/$(BINNAME).%p.callgrind.out
 
-HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/massif.out.%p
+HEAPOPTS := --tool=massif --stacks=yes --massif-out-file=$(testdir)/$(BINNAME).%p.massif.out
 
 LINTFLAGS:= -checks
 
@@ -34,10 +34,10 @@ PROFDATA := $(addprefix $(testdir)/,$(if $(LLVM),default.profdata,$(subst $(exec
 run: all
 	$(COMMAND)
 
-profile: DIR     += $(testdir)
-profile: CFLAGS  += -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) 
-profile: LDFLAGS += -fprofile-generate=$(testdir) $(filter-out -rdynamic -s,$(DLDFLAGS) $(RLDFLAGS))
-profile: $(BIN)
+profile: DIR      += $(testdir)
+profile: RCFLAGS  := -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) -fno-omit-frame-pointer 
+profile: RLDFLAGS := -fprofile-generate=$(testdir) $(filter-out -rdynamic -s,$(DLDFLAGS) $(RLDFLAGS))
+profile: release
 
 optimize: PRECOMPILE += $(PROFDATA)
 optimize: CFLAGS     += -fprofile-use=$(testdir)
