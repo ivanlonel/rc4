@@ -53,16 +53,17 @@ CFLAGS       = -pipe -fno-stack-protector $(WFLAGS) $(OPTIM_LEVEL)
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
 LDFLAGS     := -L$(libdir)
 
-RCFLAGS     := -flto -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables
+RCFLAGS     := -flto -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections
 RLDFLAGS    := -flto -s
 DCFLAGS     := -g3 $(call flagIfAvail,-fstandalone-debug)
 DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
-	RCFLAGS  += -ffunction-sections -fdata-sections
-	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none\
+	RLDFLAGS += -Wl,--gc-sections -Wl,--hash-style=gnu -Wl,--build-id=none\
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
+else
+	RLDFLAGS += -dead_strip
 endif
 
 TARGET_ARCH := -mtune=native
