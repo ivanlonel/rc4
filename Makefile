@@ -60,8 +60,8 @@ DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
-	RLDFLAGS += -Wl,--gc-sections -Wl,--hash-style=gnu -Wl,--build-id=none\
-		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro)
+	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none\
+		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro -Wl,--hash-style=gnu)
 else
 	RLDFLAGS += -dead_strip
 endif
