@@ -14,8 +14,8 @@ set UTILS_PATH=C:\msys\bin
 ::set UTILS_PATH=C:\unxutils\usr\local\wbin
 
 REM Name of the 'make' application, to be found within the PATH.
-::set MK_EXEC=mingw32-make.exe
-set MK_EXEC=make.exe
+set MK_EXEC=mingw32-make.exe
+::set MK_EXEC=make.exe
 
 REM Appending paths to PATH (instead of prepending) so that Windows keeps using %SystemRoot%\System32\find.exe instead of GNU 'find' on next runs.
 echo ;%PATH%; | find /i /c ";%CC_PATH%;" >nul || set PATH=%PATH%;%CC_PATH%

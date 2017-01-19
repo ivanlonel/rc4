@@ -27,7 +27,12 @@ LINTFLAGS:= -checks
 
 COMMAND  := $(BIN) $(ARGS)
 
-PROFDATA := $(addprefix $(testdir)/,$(if $(LLVM),default.profdata,$(subst $(exec_prefix)/,,$(OBJ:%.o=%.gcda))))
+PROFDATA := $(addprefix $(testdir)/,\
+	$(if $(LLVM),\
+		default.profdata,\
+		$(patsubst $(prefix)%$(suffix $@),%.gcda,$@)\
+	)\
+)
 
 .PHONY: cleantests memcheck callgrind massif analyze lint optimize profile run
 
@@ -35,13 +40,15 @@ run: all
 	$(COMMAND)
 
 profile: DIR      += $(testdir)
-profile: RCFLAGS  := -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) -fno-omit-frame-pointer 
+profile: RCFLAGS  := -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) -fno-omit-frame-pointer
+#profile: ASFLAGS  += -fprofile-generate=$(testdir)
 profile: RLDFLAGS := -fprofile-generate=$(testdir) $(filter-out -rdynamic -s,$(DLDFLAGS) $(RLDFLAGS))
 profile: release
 
-optimize: PRECOMPILE += $(PROFDATA)
-optimize: CFLAGS     += -fprofile-use=$(testdir)
-optimize: LDFLAGS    += -fprofile-use=$(testdir)
+optimize: PROFILING_INFO += $(PROFDATA)
+optimize: CFLAGS  += -fprofile-use=$(testdir)
+#optimize: ASFLAGS += -fprofile-use=$(testdir)
+optimize: LDFLAGS += -fprofile-use=$(testdir)
 optimize: release
 
 $(PROFDATA):
@@ -50,7 +57,7 @@ ifeq (,$(LLVM))
 else
 # It may be necessary to add llvm-profdata's path to the PATH environment variable manually. 
 # Examples include '/Library/Developer/CommandLineTools/usr/bin' and '/usr/lib/llvm-3.8/bin'
-	llvm-profdata merge -output=$@ $(testdir)/*.profraw
+	llvm-profdata merge $(testdir)/*.profraw -output=$@
 endif
 
 analyze: debug | $(testdir)

@@ -49,7 +49,7 @@ POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 
 DIR          = $(patsubst %/,%,$(dir $@))
 
-CFLAGS       = -pipe -fno-stack-protector $(WFLAGS) $(OPTIM_LEVEL)
+CFLAGS       = $(if $(LLVM),-emit-llvm) $(WFLAGS) $(OPTIM_LEVEL) -pipe -fno-stack-protector
 CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
 LDFLAGS     := -L$(libdir)
 
@@ -61,7 +61,10 @@ DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
 	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none\
-		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),,-Wl,-z,norelro -Wl,--hash-style=gnu)
+		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),\
+			,\
+			-Wl,-z,norelro -Wl,--hash-style=gnu\
+		)
 else
 	RLDFLAGS += -dead_strip
 endif
@@ -97,23 +100,28 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 
 # Mark files matching the patterns below as precious to make
 # so they won’t be automatically deleted as intermediate files.
-.PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i $(asmdir)/%.s
+.PRECIOUS: $(depdir)/%.d $(preprocdir)/%.i
 
 # Enable a second expansion of prerequisites for the targets below, between read-in and target-update phases.
 # The prerequisites taking advantage of this are represented in escaped variable references (two $'s).
 .SECONDEXPANSION:
 
-$(BIN): $(OBJ) | $$(DIR)
+
+
+$(BIN): $(if $(LLVM),$(OBJ:%.o=%.bc),$(OBJ)) | $$(DIR)
 	$(CC) $^ $(LDFLAGS) -o $@ $(TARGET_ARCH) $(LDLIBS) $(LOADLIBES)
 
-$(objdir)/%.o: $(srcdir)/%.c $(depdir)/%.d $$(PRECOMPILE) | $$(DIR)
-	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
-	$(POSTCOMPILE)
+#$(objdir)/%.o $(objdir)/%.bc: $(srcdir)/%.c $(depdir)/%.d $$(PROFILING_INFO) | $$(DIR)
+#	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
+#	$(POSTCOMPILE)
+
+$(objdir)/%.bc: $(asmdir)/%.ll $$(PROFILING_INFO) | $$(DIR)
+	$(CC) -c $< -emit-llvm $(OUTPUT_OPTION)
 
 $(objdir)/%.o: $(asmdir)/%.s | $$(DIR)
 	$(CC) -c $< $(ASFLAGS) $(OUTPUT_OPTION) $(TARGET_MACH)
 
-$(asmdir)/%.s: $(preprocdir)/%.i $$(PRECOMPILE) | $$(DIR)
+$(asmdir)/%.s $(asmdir)/%.ll: $(preprocdir)/%.i $$(PROFILING_INFO) | $$(DIR)
 	$(CC) -S $< $(CFLAGS) -o $@ $(TARGET_ARCH)
 	$(POSTCOMPILE)
 
