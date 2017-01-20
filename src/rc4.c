@@ -27,8 +27,8 @@ rc4_key_t prepare_key (const byte_t *__restrict key_data_ptr, const size_t key_d
 
     for (counter = 0; counter < SEED_SIZE; counter++) {
         y = (byte_t) ((key_data_ptr[x] + key.state[counter] + y) % SEED_SIZE);
+        x = (byte_t) (key_data_len - 1 == x ? 0 : x + 1); /* x = (byte_t) ((x + 1u) % key_data_len); */
         swap_byte(&key.state[counter], &key.state[y]);
-        x = (byte_t) ((x + 1u) % key_data_len);
     }
 
     return key;
