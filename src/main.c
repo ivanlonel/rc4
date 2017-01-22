@@ -6,7 +6,7 @@
 #include <errno.h>
 
 /* Modify a standard I/O stream mode to binary, since freopen(NULL, ...) won't work on Windows. */
-#if defined _WIN32
+#ifdef _WIN32
 # include <io.h>
 # include <fcntl.h>
 # ifdef __STRICT_ANSI__
@@ -17,7 +17,7 @@
 # define SET_BINARY_MODE(handle) (_setmode(FILE_NO(handle), _O_BINARY) == -1 ? NULL : handle)
 #else /* Other operating systems will not care about the difference between text and binary modes. */
 # define SET_BINARY_MODE(handle) handle
-#endif /* defined (_WIN32) */
+#endif /* defined _WIN32 */
 
 #ifndef SIZE_MAX /* stdint.h */
 # define SIZE_MAX ((size_t) -1)
@@ -29,7 +29,9 @@
 
 #define HEXB (CHAR_BIT / 4) /* Number of hexadecimal digits that fit in one byte. */
 
-#define BUF_SIZE 8192u /* Shouldn't be greater than half the size of your L1 data cache. */
+/* Make sure this is a power of 2. It shouldn't be greater than half the size of the target's L1 data cache,
+ * unless the reduced disk I/O overhead of a greater buffer size makes up for the cache misses somehow. */
+#define BUF_SIZE 8192u
 
 /**
  * @param str A string representation of an unsigned hexadecimal number. Must NOT contain "0x", "+" or "-".

@@ -1,10 +1,12 @@
 #ifndef RC4_H
 #define RC4_H
 
-#include <stddef.h> /* size_t */
+#include <stdlib.h>
 
-#if !defined (__GNUC__) && !defined (__restrict)
-# if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if !defined __restrict && !defined __GNUC__ && !(defined _MSC_VER && _MSC_VER >= 1400)
+# if defined __restrict__
+#  define __restrict __restrict__
+# elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
 #  define __restrict restrict
 # else
 #  define __restrict

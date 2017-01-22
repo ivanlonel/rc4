@@ -1,7 +1,9 @@
 #include "rc4.h"
 
-#if !defined (__GNUC__) && !defined (__inline)
-# if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if !defined __inline && !defined __GNUC__ && !(defined _MSC_VER && _MSC_VER >= 1310)
+# if defined __inline__
+#  define __inline __inline__
+# elif defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
 #  define __inline inline
 # else
 #  define __inline
@@ -25,6 +27,13 @@ rc4_key_t prepare_key (const byte_t *__restrict key_data_ptr, const size_t key_d
         key.state[counter] = (byte_t) counter;
     }
 
+    /* if (!(key_data_len & (key_data_len - 1))) // If key_data_len is not a power of 2
+        for (counter = 0; counter < SEED_SIZE; counter++) {
+            y = (byte_t) ((key_data_ptr[x] + key.state[counter] + y) % SEED_SIZE);
+            x = (byte_t) ((x + 1u) & (key_data_len - 1u)); // Only works if key_data_len is a power of 2
+            swap_byte(&key.state[counter], &key.state[y]);
+        }
+    else */ 
     for (counter = 0; counter < SEED_SIZE; counter++) {
         y = (byte_t) ((key_data_ptr[x] + key.state[counter] + y) % SEED_SIZE);
         x = (byte_t) (key_data_len - 1 == x ? 0 : x + 1); /* x = (byte_t) ((x + 1u) % key_data_len); */
