@@ -16,45 +16,45 @@ static __inline void swap_byte (byte_t *x, byte_t *y) {
     *y = t;
 }
 
-rc4_key_t prepare_key (const byte_t *__restrict key_data_ptr, const size_t key_data_len) {
+rc4_key_t prepare_key (const byte_t *__restrict key_data_ptr, const size_t key_length) {
     rc4_key_t key;
-    byte_t x, y;
-    size_t counter;
+    byte_t j;
+    size_t i;
 
-    x = y = key.x = key.y = 0;
+    key.i = key.j = 0;
 
-    for (counter = 0; counter < SEED_SIZE; counter++) {
-        key.state[counter] = (byte_t) counter;
+    for (i = 0; i < SEED_SIZE; i++) {
+        key.state[i] = (byte_t) i;
     }
 
-    /* if (!(key_data_len & (key_data_len - 1))) // If key_data_len is not a power of 2
-        for (counter = 0; counter < SEED_SIZE; counter++) {
-            y = (byte_t) ((key_data_ptr[x] + key.state[counter] + y) % SEED_SIZE);
-            x = (byte_t) ((x + 1u) & (key_data_len - 1u)); // Only works if key_data_len is a power of 2
-            swap_byte(&key.state[counter], &key.state[y]);
+#if defined KEY_LENGTH_REMAINDER_BITWISE_AND
+    if (!(key_length & (key_length - 1u))) /* If key_length is a power of 2 */
+        for (i = j = 0; i < SEED_SIZE; i++) { /* Faster than modulo or branching. */
+            j = (byte_t) ((j + key.state[i] + key_data_ptr[i & (key_length - 1u)]) % SEED_SIZE);
+            swap_byte(&key.state[i], &key.state[j]);
         }
-    else */ 
-    for (counter = 0; counter < SEED_SIZE; counter++) {
-        y = (byte_t) ((key_data_ptr[x] + key.state[counter] + y) % SEED_SIZE);
-        x = (byte_t) (key_data_len - 1 == x ? 0 : x + 1); /* x = (byte_t) ((x + 1u) % key_data_len); */
-        swap_byte(&key.state[counter], &key.state[y]);
+    else
+#endif 
+    for (i = j = 0; i < SEED_SIZE; i++) {
+        j = (byte_t) ((j + key.state[i] + key_data_ptr[i % key_length]) % SEED_SIZE);
+        swap_byte(&key.state[i], &key.state[j]);
     }
 
     return key;
 }
 
-void rc4 (byte_t *__restrict buffer_ptr, const size_t buffer_len, rc4_key_t *__restrict key) {
+void rc4 (byte_t *__restrict buffer_ptr, const size_t buffer_length, rc4_key_t *__restrict key) {
     size_t counter;
-    byte_t x = key->x;
-    byte_t y = key->y;
+    byte_t i = key->i;
+    byte_t j = key->j;
 
-    for (counter = 0; counter < buffer_len; counter++) {
-        x = (byte_t) ((x + 1u) % SEED_SIZE);
-        y = (byte_t) ((key->state[x] + y) % SEED_SIZE);
-        swap_byte(&key->state[x], &key->state[y]);
-        buffer_ptr[counter] ^= key->state[(key->state[x] + key->state[y]) % SEED_SIZE];
+    for (counter = 0; counter < buffer_length; counter++) {
+        i = (byte_t) ((i + 1u) % SEED_SIZE);
+        j = (byte_t) ((key->state[i] + j) % SEED_SIZE);
+        swap_byte(&key->state[i], &key->state[j]);
+        buffer_ptr[counter] ^= key->state[(key->state[i] + key->state[j]) % SEED_SIZE];
     }
     
-    key->x = x;
-    key->y = y;
+    key->i = i;
+    key->j = j;
 }

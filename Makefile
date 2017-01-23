@@ -75,7 +75,7 @@ TARGET_ARCH := -mtune=native
 
 all: release
 
-release: OPTIM_LEVEL := -O2
+release: OPTIM_LEVEL := -O3
 release: CPPFLAGS += -DNDEBUG
 release: CFLAGS   += $(RCFLAGS)
 release: LDFLAGS  += $(RLDFLAGS)
@@ -111,9 +111,9 @@ $(bindir) $(objdir) $(asmdir) $(preprocdir) $(depdir):
 $(BIN): $(if $(LLVM),$(OBJ:%.o=%.bc),$(OBJ)) | $$(DIR)
 	$(CC) $^ $(LDFLAGS) -o $@ $(TARGET_ARCH) $(LDLIBS) $(LOADLIBES)
 
-#$(objdir)/%.o $(objdir)/%.bc: $(srcdir)/%.c $(depdir)/%.d $$(PROFILING_INFO) | $$(DIR)
-#	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
-#	$(POSTCOMPILE)
+$(objdir)/%.o $(objdir)/%.bc: $(srcdir)/%.c $(depdir)/%.d $$(PROFILING_INFO) | $$(DIR)
+	$(CC) -c $< $(DEPFLAGS) $(CPPFLAGS) $(CFLAGS) $(OUTPUT_OPTION) $(TARGET_ARCH)
+	$(POSTCOMPILE)
 
 $(objdir)/%.bc: $(asmdir)/%.ll $$(PROFILING_INFO) | $$(DIR)
 	$(CC) -c $< -emit-llvm $(OUTPUT_OPTION)
