@@ -30,13 +30,13 @@ rc4_key_t prepare_key (const byte_t *__restrict key_data_ptr, const size_t key_l
 #if defined KEY_LENGTH_REMAINDER_BITWISE_AND
     if (!(key_length & (key_length - 1u))) /* If key_length is a power of 2 */
         for (i = j = 0; i < SEED_SIZE; i++) { /* Faster than modulo or branching. */
-            j = (byte_t) ((j + key.state[i] + key_data_ptr[i & (key_length - 1u)]) % SEED_SIZE);
+            j = (byte_t) (j + key.state[i] + key_data_ptr[i & (key_length - 1u)]) % SEED_SIZE;
             swap_byte(&key.state[i], &key.state[j]);
         }
     else
 #endif 
     for (i = j = 0; i < SEED_SIZE; i++) {
-        j = (byte_t) ((j + key.state[i] + key_data_ptr[i % key_length]) % SEED_SIZE);
+        j = (byte_t) (j + key.state[i] + key_data_ptr[i % key_length]) % SEED_SIZE;
         swap_byte(&key.state[i], &key.state[j]);
     }
 
@@ -49,12 +49,12 @@ void rc4 (byte_t *__restrict buffer_ptr, const size_t buffer_length, rc4_key_t *
     byte_t j = key->j;
 
     for (counter = 0; counter < buffer_length; counter++) {
-        i = (byte_t) ((i + 1u) % SEED_SIZE);
-        j = (byte_t) ((key->state[i] + j) % SEED_SIZE);
+        i = (byte_t) (i + 1u) % SEED_SIZE;
+        j = (byte_t) (key->state[i] + j) % SEED_SIZE;
         swap_byte(&key->state[i], &key->state[j]);
-        buffer_ptr[counter] ^= key->state[(key->state[i] + key->state[j]) % SEED_SIZE];
+        buffer_ptr[counter] ^= key->state[(byte_t) (key->state[i] + key->state[j]) % SEED_SIZE];
     }
-    
+
     key->i = i;
     key->j = j;
 }

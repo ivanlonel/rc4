@@ -32,11 +32,12 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
 LLVM        := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 
-WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion -Wno-long-long,-Wall -Wextra\
-	-Wpedantic -Wno-long-long -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
+WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion,\
+	-Wall -Wextra -Wpedantic -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
 	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations\
-	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)
+	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)\
+	-Wno-long-long
 
 # If the compiler suports $(1) as a flag, return it. Else, return $(2) (return empty if no $(2) was provided).
 # Doesn't check flags forwarded through -Wp, -Wa or -Wl.
@@ -68,8 +69,6 @@ ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
 else
 	RLDFLAGS += -dead_strip
 endif
-
-TARGET_ARCH := -mtune=native
 
 .PHONY: all clean distclean debug release
 
