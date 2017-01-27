@@ -32,16 +32,16 @@ DEP         := $(patsubst $(srcdir)/%,$(depdir)/%.d,$(basename $(SRC)))
 
 LLVM        := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 
-WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion,\
-	-Wall -Wextra -Wpedantic -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wredundant-decls\
-	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
-	-Wundef -Wpointer-arith -Wfloat-equal -Wwrite-strings -Wmissing-include-dirs -Wmissing-declarations\
-	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wnested-externs -Wold-style-definition)\
-	-Wno-long-long
-
 # If the compiler suports $(1) as a flag, return it. Else, return $(2) (return empty if no $(2) was provided).
 # Doesn't check flags forwarded through -Wp, -Wa or -Wl.
 flagIfAvail  = $(strip $(if $(shell echo "" | $(CC) -fsyntax-only $(1) -xc - 2>&1 | $(MATCH) error),$(2),$(1)))
+
+WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion,$(call flagIfAvail,-Wodr)\
+	-Wall -Wextra -Wpedantic -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wpointer-arith\
+	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
+	-Wundef -Wfloat-equal -Wwrite-strings -Winvalid-pch -Wmissing-include-dirs -Wmissing-declarations\
+	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wold-style-definition -Wnested-externs)\
+	-Wno-long-long
 
 # Create temporary dependency files and rename them in a separate step,
 # so that failures during the compilation won’t leave a corrupted dependency file.
@@ -51,23 +51,25 @@ POSTCOMPILE  = $(MV) $(depdir)/$*.Td $(depdir)/$*.d
 DIR          = $(patsubst %/,%,$(dir $@))
 
 CFLAGS       = $(if $(LLVM),-emit-llvm) $(WFLAGS) $(OPTIM_LEVEL) -pipe -fno-stack-protector
-CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall -Wp,-pedantic
+CPPFLAGS    := -I$(includedir) -ansi -Wp,-Wall,-pedantic
 LDFLAGS     := -L$(libdir)
 
-RCFLAGS     := -flto -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables -ffunction-sections -fdata-sections
-RLDFLAGS    := -flto -s
+RCFLAGS     := -flto -fno-common -fno-ident -fno-unwind-tables -fno-asynchronous-unwind-tables\
+	-ffunction-sections -fdata-sections -minline-all-stringops
+RLDFLAGS    := -flto
 DCFLAGS     := -g3 $(call flagIfAvail,-fstandalone-debug)
 DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
-	RLDFLAGS += -Wl,--gc-sections -Wl,--build-id=none\
+	RLDFLAGS += -Wl,--gc-sections,--build-id=none,--no-undefined,--warn-common\
+		-Wl,--reduce-memory-overheads,--discard-all,--relax,-O1\
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),\
 			,\
-			-Wl,-z,norelro -Wl,--hash-style=gnu\
-		)
+			-Wl,-z,norelro,--hash-style=gnu\
+		) -s
 else
-	RLDFLAGS += -dead_strip
+	RLDFLAGS += -Wl,-S,-x,-dead_strip
 endif
 
 .PHONY: all clean distclean debug release
@@ -75,6 +77,7 @@ endif
 all: release
 
 release: OPTIM_LEVEL := -O3
+release: TARGET_ARCH += $(call flagIfAvail,-malign-data=cacheline)
 release: CPPFLAGS += -DNDEBUG
 release: CFLAGS   += $(RCFLAGS)
 release: LDFLAGS  += $(RLDFLAGS)

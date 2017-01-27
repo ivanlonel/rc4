@@ -42,7 +42,7 @@
 static size_t hex_str_to_byte_array (byte_t *__restrict arr, const char *__restrict str, size_t length) {
     size_t i, j;
     unsigned long hex;
-    char *str_ptr;
+    char **__restrict str_ptr = NULL;
     char buf[HEXB * sizeof hex + 1] = "";
     byte_t str_offset;
     byte_t offset = 0;
@@ -61,7 +61,7 @@ static size_t hex_str_to_byte_array (byte_t *__restrict arr, const char *__restr
 
     str_offset = length % (HEXB * sizeof hex);
     if (str_offset) {
-        hex = strtoul(strncat(buf, str, str_offset), &str_ptr, 16);
+        hex = strtoul(strncat(buf, str, str_offset), str_ptr, 16);
         if (errno) {
             return SIZE_MAX;
         }
@@ -73,7 +73,7 @@ static size_t hex_str_to_byte_array (byte_t *__restrict arr, const char *__restr
 
     for (j = 0; j < length / (HEXB * sizeof hex); j++) {
         buf[0] = '\0';
-        hex = strtoul(strncat(buf, str + str_offset + j * (HEXB * sizeof hex), HEXB * sizeof hex), &str_ptr, 16);
+        hex = strtoul(strncat(buf, str + str_offset + j * (HEXB * sizeof hex), HEXB * sizeof hex), str_ptr, 16);
         if (errno) {
             return SIZE_MAX;
         }

@@ -41,13 +41,11 @@ run: all
 
 profile: DIR      += $(testdir)
 profile: RCFLAGS  := -fprofile-generate=$(testdir) $(DCFLAGS) $(RCFLAGS) -fno-omit-frame-pointer
-#profile: ASFLAGS  += -fprofile-generate=$(testdir)
-profile: RLDFLAGS := -fprofile-generate=$(testdir) $(filter-out -rdynamic -s,$(DLDFLAGS) $(RLDFLAGS))
+profile: RLDFLAGS := -fprofile-generate=$(testdir) $(DLDFLAGS) $(filter -flto,$(RLDFLAGS))
 profile: release
 
 optimize: PROFILING_INFO += $(PROFDATA)
 optimize: CFLAGS  += -fprofile-use=$(testdir)
-#optimize: ASFLAGS += -fprofile-use=$(testdir)
 optimize: LDFLAGS += -fprofile-use=$(testdir)
 optimize: release
 
