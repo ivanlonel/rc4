@@ -12,24 +12,24 @@
 				<Option object_output=".o" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF test/dummy.txt test/encrypted.txt" />
+				<Option parameters="00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fA0A1A2A3A4A5A6A7A8A9AaAbAcAdAeAfB0B1B2B3B4B5B6B7B8B9BaBbBcBdBeBfC0C1C2C3C4C5C6C7C8C9CaCbCcCdCeCfD0D1D2D3D4D5D6D7D8D9DaDbDcDdDeDfE0E1E2E3E4E5E6E7E8E9EaEbEcEdEeEfF0F1F2F3F4F5F6F7F8F9FaFbFcFdFeFf test/dummy.txt test/encrypted.txt" />
 				<Compiler>
 					<Add option="-fomit-frame-pointer" />
-					<Add option="-O2" />
+					<Add option="-O3" />
 					<Add option="-flto" />
 					<Add option="-fno-common" />
 					<Add option="-fno-ident" />
 					<Add option="-fno-unwind-tables" />
 					<Add option="-fno-asynchronous-unwind-tables" />
-					<Add option="-fno-stack-protector" />
 					<Add option="-ffunction-sections" />
 					<Add option="-fdata-sections" />
+					<Add option="-minline-all-stringops" />
 					<Add option="-DNDEBUG" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
 					<Add option="-flto" />
-					<Add option="-Wl,--gc-sections" />
+					<Add option="-Wl,--gc-sections,--no-undefined,--warn-common,--reduce-memory-overheads,--discard-all,--relax,-O1" />
 				</Linker>
 			</Target>
 			<Target title="debug">
@@ -37,7 +37,7 @@
 				<Option object_output=".o" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF test/dummy.txt test/encrypted.txt" />
+				<Option parameters="00102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f606162636465666768696a6b6c6d6e6f707172737475767778797a7b7c7d7e7f808182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9fA0A1A2A3A4A5A6A7A8A9AaAbAcAdAeAfB0B1B2B3B4B5B6B7B8B9BaBbBcBdBeBfC0C1C2C3C4C5C6C7C8C9CaCbCcCdCeCfD0D1D2D3D4D5D6D7D8D9DaDbDcDdDeDfE0E1E2E3E4E5E6E7E8E9EaEbEcEdEeEfF0F1F2F3F4F5F6F7F8F9FaFbFcFdFeFf test/dummy.txt test/encrypted.txt" />
 				<Compiler>
 					<Add option="-g" />
 					<Add option="-g3" />
@@ -45,26 +45,10 @@
 					<Add option="-DDEBUG" />
 				</Compiler>
 			</Target>
-			<Target title="profile">
-				<Option output="bin/rc4" prefix_auto="1" extension_auto="1" />
-				<Option object_output=".o" />
-				<Option type="1" />
-				<Option compiler="gcc" />
-				<Option use_console_runner="0" />
-				<Option parameters="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF test/dummy.txt test/encrypted.txt" />
-				<Compiler>
-					<Add option="-O1" />
-					<Add option="-pg" />
-				</Compiler>
-				<Linker>
-					<Add option="-pg -lgmon" />
-				</Linker>
-			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wshadow" />
 			<Add option="-Winit-self" />
-			<Add option="-Wredundant-decls" />
 			<Add option="-Wcast-align" />
 			<Add option="-Wundef" />
 			<Add option="-Wfloat-equal" />
@@ -77,7 +61,9 @@
 			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-ansi" />
+			<Add option="-Wp,-Wall,-pedantic" />
 			<Add option="-pipe" />
+			<Add option="-fno-stack-protector" />
 			<Add option="-Wconversion" />
 			<Add option="-Wformat=2" />
 			<Add option="-Wstrict-overflow=5" />
@@ -86,11 +72,14 @@
 			<Add option="-Wlogical-op" />
 			<Add option="-Wpointer-arith" />
 			<Add option="-Wwrite-strings" />
+			<Add option="-Winvalid-pch" />
 			<Add option="-Wmissing-prototypes" />
 			<Add option="-Wstrict-prototypes" />
 			<Add option="-Wbad-function-cast" />
 			<Add option="-Wnested-externs" />
 			<Add option="-Wold-style-definition" />
+			<Add option="-Wno-long-long" />
+			<Add option="-DKEY_LENGTH_REMAINDER_BITWISE_AND" />
 			<Add directory="include" />
 		</Compiler>
 		<Linker>

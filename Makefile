@@ -37,7 +37,7 @@ LLVM        := $(shell $(CC) --version 2>&1 | $(MATCH) clang)
 flagIfAvail  = $(strip $(if $(shell echo "" | $(CC) -fsyntax-only $(1) -xc - 2>&1 | $(MATCH) error),$(2),$(1)))
 
 WFLAGS      := $(if $(LLVM),-Weverything -Wno-disabled-macro-expansion,$(call flagIfAvail,-Wodr)\
-	-Wall -Wextra -Wpedantic -Wformat=1 -Wstrict-overflow=5 -Wshadow -Wconversion -Wpointer-arith\
+	-Wall -Wextra -Wpedantic -Wformat=2 -Wstrict-overflow=5 -Wshadow -Wconversion -Wpointer-arith\
 	-Winit-self -Wpadded -Winline -Wcast-qual -Wcast-align -Wlogical-op -Wswitch-default -Wswitch-enum\
 	-Wundef -Wfloat-equal -Wwrite-strings -Winvalid-pch -Wmissing-include-dirs -Wmissing-declarations\
 	-Wmissing-prototypes -Wstrict-prototypes -Wbad-function-cast -Wold-style-definition -Wnested-externs)\
@@ -62,11 +62,11 @@ DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 
 # Flags not working on MacOSX
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
-	RLDFLAGS += -Wl,--gc-sections,--build-id=none,--no-undefined,--warn-common\
+	RLDFLAGS += -Wl,--gc-sections,--no-undefined,--warn-common\
 		-Wl,--reduce-memory-overheads,--discard-all,--relax,-O1\
 		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),\
 			,\
-			-Wl,-z,norelro,--hash-style=gnu\
+			-Wl,-z,norelro,--build-id=none,--hash-style=gnu\
 		) -s
 else
 	RLDFLAGS += -Wl,-S,-x,-dead_strip
