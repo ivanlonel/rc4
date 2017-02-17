@@ -64,7 +64,7 @@ DLDFLAGS    := $(call flagIfAvail,-rdynamic)
 ifeq (,$(shell $(SYSNAME) 2>&1 | $(MATCH) Darwin))
 	RLDFLAGS += -Wl,--gc-sections,--no-undefined,--warn-common\
 		-Wl,--reduce-memory-overheads,--discard-all,--relax,-O1\
-		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MINGW|WINDOWS"),\
+		$(if $(shell $(SYSNAME) 2>&1 | $(MATCH) "CYGWIN|MSYS_NT|MINGW|WINDOWS"),\
 			,\
 			-Wl,-z,norelro,--build-id=none,--hash-style=gnu\
 		) -s

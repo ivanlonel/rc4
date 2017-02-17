@@ -1,15 +1,17 @@
 @echo off
 
 REM Compiler path. May contain the 'make' application and other utilities as well.
-set CC_PATH=C:\mingw-w64\x86_64-6.3.0-release-posix-seh-rt_v5-rev1\mingw64\bin
+set CC_PATH=C:\msys64\mingw64\bin
+::set CC_PATH=C:\mingw-w64\x86_64-6.3.0-release-posix-seh-rt_v5-rev1\mingw64\bin
 ::set CC_PATH=C:\mingw-w64\x86_64-5.4.0-release-posix-seh-rt_v5-rev0\mingw64\bin
 ::set CC_PATH=C:\mingw-w64\x86_64-4.9.3-release-posix-seh-rt_v4-rev1\mingw64\bin
 ::set CC_PATH=C:\Dev-Cpp\MinGW64\bin
 ::set CC_PATH=C:\CodeBlocks\MinGW\bin
 ::set CC_PATH=C:\cygwin64\bin
 
-REM Where to look for executables mentioned in the makefile, like 'rm', 'mv', 'grep', 'uname' and even 'make' itself if they aren't in CC_PATH already
-set UTILS_PATH=C:\msys\bin
+REM Where to look for executables called from the makefile, like 'rm', 'mv', 'grep', 'uname' and even 'make' itself if they aren't in CC_PATH already
+set UTILS_PATH=C:\msys64\usr\bin
+::set UTILS_PATH=C:\msys\bin
 ::set UTILS_PATH=C:\gnuwin32\bin
 ::set UTILS_PATH=C:\unxutils\usr\local\wbin
 
