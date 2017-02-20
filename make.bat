@@ -26,6 +26,8 @@ echo ;%PATH%; | find /i /c ";%UTILS_PATH%;" >nul || set PATH=%PATH%;%UTILS_PATH%
 REM Call 'make' with all the arguments passed to this batch script, plus BINNAME with an explicit .exe extension and a minimal PATH to avoid ambiguity with Windows utility names (like 'find')
 %MK_EXEC% BINNAME=rc4.exe PATH="%CC_PATH%;%UTILS_PATH%" %*
 
-
-REM cl /Iinclude /nologo /MP /Za /Wall /D_CRT_SECURE_NO_WARNINGS src\*.c /Fo.o\ /Febin\rc4.exe /analyze /Ox /MT /GA /Gw /Gy /GL
-REM cl /Iinclude /nologo /MP /Za /Wall /D_CRT_SECURE_NO_WARNINGS src\*.c /Fo.o\ /Febin\rc4.exe /analyze /Z7 /MTd /DEBUG
+
+REM cl /nologo /MP /Za /Wall /analyze /D_CRT_SECURE_NO_WARNINGS /DKEY_LENGTH_REMAINDER_BITWISE_AND /Iinclude src\*.c /Fo.o\ /Febin\rc4MT.exe /MT /Ox /GA /Gw /Gy /GL
+REM cl /nologo /MP /Za /Wall /analyze /D_CRT_SECURE_NO_WARNINGS /DKEY_LENGTH_REMAINDER_BITWISE_AND /Iinclude src\*.c /Fo.o\ /Febin\rc4MD.exe /MD /Ox /GA /Gw /Gy /GL
+REM cl /nologo /MP /Za /Wall /analyze /D_CRT_SECURE_NO_WARNINGS /DKEY_LENGTH_REMAINDER_BITWISE_AND /Iinclude src\*.c /Fo.o\ /Febin\rc4MTd.exe /MTd /Z7 /DEBUG
+REM cl /nologo /MP /Za /Wall /analyze /D_CRT_SECURE_NO_WARNINGS /DKEY_LENGTH_REMAINDER_BITWISE_AND /Iinclude src\*.c /Fo.o\ /Febin\rc4MDd.exe /MDd /Z7 /DEBUG
